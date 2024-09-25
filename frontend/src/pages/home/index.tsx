@@ -20,28 +20,21 @@ function HomePage() {
 
             {/* Connect Section */}
             <section className="connect-section">
-                <div className="connect-row">
+                
                     {/* Connect as CNMS */}
-                    <div className="connect-card">
-                        <h3>Connect as CNMS (Certificate Issuer)</h3>
-                        <p>
-                            If you are a certified authority looking to issue certificates, connect with us to manage and issue certificates securely and efficiently.
-                        </p>
-                        <button className="connect-button" onClick={() => navigate(`/connect-cnms`)}>Continue as CNMS</button>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="divider"></div>
+                  
 
                     {/* Connect qs Nexus */}
                     <div className="connect-card">
-                        <h3>Connect as Nexus (Certificate Demander)</h3>
+                        <h3>Use our solution</h3>
                         <p>
-                            If you need to request your certificates, connect with as Nexus to access a secure and streamlined certificate management system.
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed et ex non sem rhoncus pellentesque quis non lorem. 
                         </p>
-                        <button className="connect-button" onClick={() => navigate(`/upload`)}>Continue as Nexus</button>
+                        <button className="connect-button" onClick={() => navigate(`/auth`)}>Continue</button>
                     </div>
-                </div>
+
+                   
+                
 
                 {/* Divider */}
 

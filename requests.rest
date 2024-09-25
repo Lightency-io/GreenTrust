@@ -1,0 +1,26 @@
+POST http://localhost:3000/auth/signUp
+Content-Type: application/json
+
+{
+  "email": "issuer@example.com",
+  "password": "securePassword123",
+  "role": "issuer",
+  "companyName": "AuditCorp",
+  "licence": "AUD-987654321",
+  "organization": "Nexus"
+}
+###
+POST http://localhost:3000/auth/signIn
+Content-Type: application/json
+
+{
+  "email": "auditor@example.com",
+  "password": "securePassword123"
+}
+###
+POST http://localhost:3000/Download
+Content-Type: application/json
+
+{
+  "uuid": "8df7e116-ce5e-4007-8d44-ff190b3d7e0b"
+}

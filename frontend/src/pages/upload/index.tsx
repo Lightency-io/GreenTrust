@@ -69,10 +69,7 @@ function UploadPage() {
     return (
         <>
             <div className="home-page">
-            {/* Header with button aligned to the right */}
-            <header className="header-upload">
-                <button className="header-button" onClick={() => {}}>Connect Wallet</button>
-            </header>
+           
           
             <div style={{display: 'grid', placeItems: "center", height:  "80vh"}}>
                 <Spin spinning={isPending} >

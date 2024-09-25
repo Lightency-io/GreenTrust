@@ -8,6 +8,37 @@ const CSV = require("csv-parse");
 const sqlite3 = require('sqlite3').verbose();
 const XlsxPopulate = require('xlsx-populate');
 const XLSX = require("xlsx");
+const userRoute = require('./routes/userRouter.js');
+const mongoose = require("mongoose")
+
+
+const app = express()
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true }));
+
+app.use(cors(
+    {
+        origin: "*"
+    }
+))
+app.use("/auth",userRoute)
+app.get("/healthy", (req, res) => {return res.json({msg : 'Hello World!'})});
+
+
+//db connection
+const database = "GreenTrust" 
+const hostname = '127.0.0.1'
+
+mongoose.set('debug', true)
+mongoose.Promise = global.Promise
+mongoose
+    .connect(`mongodb://${hostname}:27017/${database}`)
+    .then(() => {
+        console.log(`connected to  ${database}`)
+    })
+    .catch(err => {
+        console.log(err)
+    })
 
 // the unbreakable filter 🤪
 const filter = function (_, file, cb) {
@@ -32,10 +63,9 @@ const upload = multer({
     }
 })
 
-const app = express()
+
 
 app.use(compression())
-app.use(cors())
 app.use(express.json())  
 
 /*{
@@ -150,84 +180,35 @@ function get_p(f, r) {
     })
 }
 
-app.post("/download", (req,res,next) => {
-    const file_path = path.join(__dirname, "template.xlsm")
-    const {keys, uuid, rows} = req.body
-    if(!keys) res.status(401).end()
-    XlsxPopulate.fromFileAsync(file_path)
-    .then(async workbook => {
-        const file = files[uuid]
-        if(!file) {
-            next(new Error("File not found"))
+    app.post("/download", async (req,res,next) => {
+        const { uuid } = req.body;
+        if (!uuid) return res.status(401).end();
+    
+        try {
+            const file = files[uuid];
+            if (!file) {
+                return next(new Error("File not found"));
+            }
+    
+            // Fetch all the data from the table
+            const stmt_exp = db.prepare(`SELECT *, SUM(GarantiaSolicitada) as sum FROM ${file.table_id} GROUP BY CodigoPlanta`);
+            const recs_exp = await all_p(stmt_exp);
+    
+            const stmt_prod = db.prepare(`SELECT * FROM ${file.table_id}`);
+            const recs_prod = await all_p(stmt_prod);
+    
+            const responseData = {
+                expedicion: recs_exp,
+                produccionMensual: recs_prod
+            };
+    
+            // Send the response
+            res.json(responseData);
+    
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            next(error); // Pass the error to the error handler
         }
-
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1; 
-        let dd = today.getDate();
-        if (dd < 10) dd = '0' + dd;
-        if (mm < 10) mm = '0' + mm;
-
-        const formattedToday = dd + '/' + mm + '/' + yyyy; 
-        workbook.sheet("Datos_Comunes").cell("D21").value("Barcelone")
-        workbook.sheet("Datos_Comunes").cell("F21").value(formattedToday)
-        workbook.sheet("Datos_Comunes").cell("E11").value("42")
-        workbook.sheet("Datos_Comunes").cell("C11").value("cosel de cent")
-        workbook.sheet("Datos_Comunes").cell("G11").value("08014")
-        workbook.sheet("Datos_Comunes").cell("H11").value("Barcelona")
-        workbook.sheet("Datos_Comunes").cell("I11").value("Barcelona")
-        workbook.sheet("Datos_Comunes").cell("J11").value("Espana")
-        workbook.sheet("Datos_Comunes").cell("K11").value("932289972")
-        workbook.sheet("Datos_Comunes").cell("L11").value("contratacionsolar@nexusenergia.com")
-
-        //TODO: maybe an SQL Injection. switch to SEQUELIZE ORM
-        const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
-        const recs_exp = (await all_p(stmt_exp))
-
-        const stmt_prod = db.prepare(`select * from ${file.table_id} where id in (${keys.toString()})`)
-        const recs_prod = (await all_p(stmt_prod))
-
-        let i = 14
-        for (const rec of recs_exp) {
-            const stmt_init = db.prepare(`select FechaInicio from ${file.table_id} where CIF=? and CIL=? and id in (${keys.toString()}) order by FechaInicio limit 1`)
-            const f_i = (await get_p(stmt_init, [rec.CIF, rec.CIL]))[0]
-            const fecha_inicio = new Date(Number(f_i.FechaInicio))
-
-            const stmt_f = db.prepare(`select FechaFin from ${file.table_id} where CIF=? and CIL=? and id in (${keys.toString()}) order by FechaFin DESC limit 1`)
-            const f_f = (await get_p(stmt_f, [rec.CIF, rec.CIL]))[0]
-            const fecha_fin = new Date(Number(f_f.FechaFin))
-            
-            workbook.sheet("EXPEDICION").cell('A'+i).value(rec.CIF)
-            workbook.sheet("EXPEDICION").cell("B"+i).value(rec.RazonSocial)
-            workbook.sheet("EXPEDICION").cell("C"+i).value(rec.CodigoPlanta)
-            workbook.sheet("EXPEDICION").cell("D"+i).value(rec.CIL)
-            workbook.sheet("EXPEDICION").cell("E"+i).value(Number(rec.Potencia)*1000)
-            workbook.sheet("EXPEDICION").cell("F"+i).value(fecha_inicio).style("numberFormat", "mm-yyyy")
-            workbook.sheet("EXPEDICION").cell("G"+i).value(fecha_fin).style("numberFormat", "mm-yyyy")                                                  
-            workbook.sheet("EXPEDICION").cell("H"+i).value(Number(rec.sum)/1000)                                                 
-
-            i++
-        }
-
-        i = 12
-        for(const rec of recs_prod) {
-            workbook.sheet("Produccion_Mensual").cell("A"+(i)).value(rec.CIL)
-            workbook.sheet("Produccion_Mensual").cell("B"+(i)).value(Number(rec.GarantiaSolicitada)/1000)
-            workbook.sheet("Produccion_Mensual").cell("C"+(i)).value(Number(rec.Mes)).style("numberFormat", "00")
-            workbook.sheet("Produccion_Mensual").cell("D"+(i)).value(Number(rec["Año"]))
-            i++
-        }
-
-        workbook.outputAsync({
-            type: "nodebuffer"
-        }).then((buf) => {
-            res.send(buf)
-        })
-
-            
-
-
-    });
 
 
 })

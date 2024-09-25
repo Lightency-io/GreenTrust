@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { App } from "antd";
 import UploadPage from './pages/upload';
 import FilePage from './pages/file';
+import AuthPage from './pages/auth';
 import './main.css'
 import {
   RouterProvider,
@@ -10,6 +11,7 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HomePage from './pages/home';
+import IsserDashboard from './pages/issuerDashboard/index';
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import {MartianWallet} from "@martianwallet/aptos-wallet-adapter"
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
@@ -23,6 +25,18 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <HomePage />
+    ),
+  },
+  {
+    path: "/auth",
+    element: (
+      <AuthPage />
+    ),
+  },
+  {
+    path: "/Dashboard",
+    element: (
+      <IsserDashboard />
     ),
   },
   {

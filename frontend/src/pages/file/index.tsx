@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Button, Flex, Input, InputRef, Space, Table, TableColumnType, DatePicker } from 'antd';
 import { FileType } from "../../component/FileCard";
-import { DownloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { FileAddOutlined , SearchOutlined } from "@ant-design/icons";
 import { FilterDropdownProps, TableRowSelection } from "antd/es/table/interface";
 import { useRef, useState } from "react";
 import Highlighter from "react-highlight-words";
@@ -271,7 +271,7 @@ function UploadPage() {
         dataIndex: 'operation',
         fixed: 'right',
         render: (_: any, record: RecordType) => {
-          return <Button type="primary" icon={<DownloadOutlined />} size="large"  onClick={() => {
+          return <Button type="primary" icon={<FileAddOutlined />} size="large"  onClick={() => {
             fetch('http://localhost:3000/download', {
               body: JSON.stringify({keys: [record.id], rows: [record.CIF], uuid:uuid}),
               method: "POST",
