@@ -42,7 +42,7 @@ async function getDataRow(req, res, next) {
 
 async function getDemand(req, res, next) {
     try {
-        const demand = await Data.find();
+        const demand = await Data.find({ status: "in_progress" });
         res.status(200).json(demand);
     } catch (error) {
         console.error('Error getting demand:', error);
