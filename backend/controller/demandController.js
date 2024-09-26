@@ -1,34 +1,52 @@
-async function demand(req, res, next) {
-    const { uuid } = req.body;
-    if (!uuid) return res.status(401).end();
+const Data = require('../model/demandModel.js'); 
+const utils = require('../middleware/utils.js');
+const sqlite3 = require('sqlite3').verbose();
 
-    try {
-        const file = files[uuid];
-        if (!file) {
-            return next(new Error("File not found"));
-        }
 
-        // Fetch all the data from the table
-        const stmt_exp = db.prepare(`SELECT *, SUM(GarantiaSolicitada) as sum FROM ${file.table_id} GROUP BY CodigoPlanta`);
-        const recs_exp = await all_p(stmt_exp);
+const db = new sqlite3.Database(':memory:');
 
-        const stmt_prod = db.prepare(`SELECT * FROM ${file.table_id}`);
-        const recs_prod = await all_p(stmt_prod);
+let files = {}
+// Function to save contracts to MongoDB
+const saveContracts = async (data) => {
+  try {
+    const contractsArray = data; // Get the array of contracts from the request body
+    
+    // Format `FechaInicio` and `FechaFin` from timestamp to Date objects
+    const formattedContracts = contractsArray.map(contract => ({
+      ...contract,
+      FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])), // Convert from timestamp to Date
+      FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])), // Convert from timestamp to Date
+    }));
 
-        // Combine the data in a format you wish to return
-        const responseData = {
-            expedicion: recs_exp,
-            produccionMensual: recs_prod
-        };
+    // Now we save the formatted contracts to MongoDB
+    const savedData = await Data.insertMany(formattedContracts);
 
-        // Send the response
-        res.json(responseData);
+    return savedData;
+  } catch (error) {
+    console.error('Error saving contracts to MongoDB:', error);
+  }
+};
 
-    } catch (error) {
-        console.error("Error fetching data:", error);
-        next(error); // Pass the error to the error handler
-    }
+async function getDataRow(req, res, next) {
+    const { keys, uuid } = req.body
+    if (!keys) res.status(401).end()
+            const file = files[uuid]
+            if (!file) {
+                next(new Error("File not found"))
+            }
+            const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
+            const recs_exp = (await utils.get_p(stmt_exp))
+            res.send(recs_exp)
+            //TODO create a demand obj consume it from front
 }
 
+async function getDemand(req, res, next) {
+    try {
+        const demand = await Data.find();
+        res.status(200).json(demand);
+    } catch (error) {
+        console.error('Error getting demand:', error);
+}
+}
 
-module.exports = {demand};
+module.exports = {getDataRow,saveContracts,getDemand};

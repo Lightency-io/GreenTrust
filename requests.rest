@@ -18,9 +18,19 @@ Content-Type: application/json
   "password": "securePassword123"
 }
 ###
-POST http://localhost:3000/Download
+POST http://localhost:3000/download
 Content-Type: application/json
 
 {
-  "uuid": "8df7e116-ce5e-4007-8d44-ff190b3d7e0b"
+  "uuid": "49e064cf-481d-47d3-b93c-b7486c574e22",
+  "keys": ["855126"],
+  "rows": ["B92478296"]
+}
+
+###
+GET http://localhost:3000/demand/getDemand
+Content-Type: application/json
+
+{
+
 }

@@ -1,17 +1,15 @@
 const express = require('express')
 const mongoose = require('mongoose')
-
 const app = express()
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
-const { Schema, model } = mongoose
+const { Schema, model } = mongoose;
 
-// Schema for the data structure you provided
 const dataSchema = new Schema(
   {
     id: {
-      type: String,
+      type: String, 
       required: true,
     },
     CIF: {
@@ -31,19 +29,19 @@ const dataSchema = new Schema(
       required: true,
     },
     Año: {
-      type: String,
+      type: String, 
       required: true,
     },
     Mes: {
-      type: String,
+      type: String, 
       required: true,
     },
     FechaInicio: {
-      type: String,
+      type: Date, 
       required: true,
     },
     FechaFin: {
-      type: String,
+      type: Date, 
       required: true,
     },
     GarantiaSolicitada: {
@@ -76,14 +74,14 @@ const dataSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
+      enum: ['issued', 'in_progress', 'rejected','audited','withdrawn'],
+      default: 'in_progress',
       required: true,
     }
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
-)
+);
 
-module.exports = model('Data', dataSchema)
+module.exports = model('Data', dataSchema);

@@ -1,9 +1,12 @@
 const express = require('express')
-const DemandController = require('../controller/demandController.js')
+const saveContracts = require('../controller/demandController.js');
+
+
 
 const router = express.Router()
 
-router.post('/demand', DemandController.demand)
+router.post('/saveCertificates', saveContracts.getDataRow)
+router.get('/getDemand', saveContracts.getDemand)
 
 
 module.exports = router;

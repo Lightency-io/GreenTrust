@@ -13,9 +13,23 @@ interface Certificate {
     Potencia: string;
     status: string;
 }
+let Certificate;
+try {
+    const response = await fetch('http://localhost:3000/demand/getDemand'); // API call
+
+    if (!response.ok) {
+      throw new Error(`Error fetching data: ${response.statusText}`);
+    }
+    
+    const result = await response.json();  // Parse JSON response
+    console.log(result);  
+    Certificate = result;  // Set data state      
+  } catch (err: any) {
+    console.log(err)  // Catch and set error state
+  }
 
 function issuerDashboard() {
-    const [data] = useState<Certificate[]>(jsonData);
+    const [data] = useState<Certificate[]>(Certificate);
     const [selectedObject, setSelectedObject] = useState<Certificate | null>(null);
     const [activeTab, setActiveTab] = useState<string>('issued');
 

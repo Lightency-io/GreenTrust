@@ -3,7 +3,7 @@ import { InboxOutlined } from '@ant-design/icons';
 import FileCard, { type FileType } from "../../component/FileCard";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-
+import App from "../Nav/Menu.tsx"
 const { Dragger } = Upload
 import { Aptos } from "@aptos-labs/ts-sdk";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
@@ -68,9 +68,8 @@ function UploadPage() {
 
     return (
         <>
+            <App />
             <div className="home-page">
-           
-          
             <div style={{display: 'grid', placeItems: "center", height:  "80vh"}}>
                 <Spin spinning={isPending} >
                     <Flex wrap gap="middle">

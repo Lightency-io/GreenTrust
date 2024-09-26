@@ -10,7 +10,8 @@ const XlsxPopulate = require('xlsx-populate');
 const XLSX = require("xlsx");
 const userRoute = require('./routes/userRouter.js');
 const mongoose = require("mongoose")
-
+const demandController = require('./controller/demandController.js');
+const demandRoute = require('./routes/demandRoute.js');
 
 const app = express()
 app.use(express.json()); // for parsing application/json
@@ -64,29 +65,11 @@ const upload = multer({
 })
 
 
-
+app.use("/demand", demandRoute);
 app.use(compression())
 app.use(express.json())  
 
-/*{
-    id: 855126,
-    CIF: 'B92478296',
-    RazonSocial: 'Angulo Anaya S.L.',
-    CodigoPlanta: 'ANGULOANAYA',
-    CIL: 'ES0031000000400038QB1F001',
-    'Año': 2024,
-    Mes: 1,
-    FechaInicio: 45292,
-    FechaFin: 45351,
-    GarantiaSolicitada: 1,
-    TipoCesion: 'Ced_NX',
-    idContratoGDO: 21491,
-    idDatosGestion: 572127,
-    Potencia: 0.15,
-    Tecnologia: 'HIDRAULICA',
-    NombreFicheroExcel: 'Expedicion_638557050605449585_01',
-    ID_Datatable: 855126
-}*/
+
 function createTableBuilder(uuid) {
     return `CREATE TABLE ${uuid} (
         'id' TEXT,
@@ -180,37 +163,18 @@ function get_p(f, r) {
     })
 }
 
-    app.post("/download", async (req,res,next) => {
-        const { uuid } = req.body;
-        if (!uuid) return res.status(401).end();
-    
-        try {
-            const file = files[uuid];
+app.post("/download",async (req, res, next) => {
+    const { keys, uuid } = req.body
+    if (!keys) res.status(401).end()
+            const file = files[uuid]
             if (!file) {
-                return next(new Error("File not found"));
+                next(new Error("File not found"))
             }
-    
-            // Fetch all the data from the table
-            const stmt_exp = db.prepare(`SELECT *, SUM(GarantiaSolicitada) as sum FROM ${file.table_id} GROUP BY CodigoPlanta`);
-            const recs_exp = await all_p(stmt_exp);
-    
-            const stmt_prod = db.prepare(`SELECT * FROM ${file.table_id}`);
-            const recs_prod = await all_p(stmt_prod);
-    
-            const responseData = {
-                expedicion: recs_exp,
-                produccionMensual: recs_prod
-            };
-    
-            // Send the response
-            res.json(responseData);
-    
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            next(error); // Pass the error to the error handler
-        }
-
-
+            const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
+            const recs_exp = (await all_p(stmt_exp))
+            let data = demandController.saveContracts(recs_exp)
+            res.send(data)
+            //TODO create a demand obj consume it from front
 })
 
 app.use(function (err, req, res, next) {
