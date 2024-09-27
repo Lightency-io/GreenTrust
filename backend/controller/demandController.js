@@ -42,11 +42,76 @@ async function getDataRow(req, res, next) {
 
 async function getDemand(req, res, next) {
     try {
-        const demand = await Data.find({ status: "in_progress" });
+        const demand = await Data.find();
         res.status(200).json(demand);
     } catch (error) {
         console.error('Error getting demand:', error);
 }
 }
 
-module.exports = {getDataRow,saveContracts,getDemand};
+
+// Function to update tokenOnChainId for a specific document
+const updateTokenOnChainId = async (razonSocial, id, tokenOnChainId) => {
+  if (!tokenOnChainId) {
+    throw new Error('tokenOnChainId is required');
+  }
+
+  try {
+    // Find the document by both RazonSocial and id
+    const updatedData = await Data.findOneAndUpdate(
+      { RazonSocial: razonSocial, id }, // Match the document by both RazonSocial and id
+      { tokenOnChainId }, // Set the new tokenOnChainId
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedData) {
+      throw new Error('Data not found');
+    }
+
+    // Return the updated document
+    return updatedData;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+// Function to fetch all certificates with status "in_progress"
+const fetchCertificatesInProgress = async () => {
+  try {
+    // Find all documents where the status is "in_progress"
+    const certificates = await Data.find({ status: 'in_progress' });
+
+    if (!certificates.length) {
+      throw new Error('No certificates found with status "in_progress"');
+    }
+
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+// Function to update the status of a certificate in the database
+const updateCertificateStatusInDB = async (razonSocial, id, status) => {
+  try {
+    const updatedCertificate = await Data.findOneAndUpdate(
+      { RazonSocial: razonSocial, id },  // Match by both RazonSocial and id
+      { status },  // Update the status field
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedCertificate) {
+      throw new Error('Certificate not found');
+    }
+
+    return updatedCertificate;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB};

@@ -13,7 +13,7 @@ interface Certificate {
     Potencia: string;
     status: string;
 }
-let Certificate;
+let Certificate: Certificate[] | (() => Certificate[]);
 try {
     const response = await fetch('http://localhost:3000/demand/getDemand'); // API call
 

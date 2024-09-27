@@ -14,8 +14,8 @@ POST http://localhost:3000/auth/signIn
 Content-Type: application/json
 
 {
-  "email": "auditor@example.com",
-  "password": "securePassword123"
+  "email": "demander8@gmail.com",
+  "password": "1234"
 }
 ###
 POST http://localhost:3000/download

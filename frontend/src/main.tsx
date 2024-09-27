@@ -15,6 +15,8 @@ import IsserDashboard from './pages/issuerDashboard/index';
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import {MartianWallet} from "@martianwallet/aptos-wallet-adapter"
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
+import CNMSPage from './pages/cnms';
+import IssuerDashboard from './pages/issuerDashboard/index';
 
 const wallets = [new PetraWallet(), new MartianWallet];
 
@@ -36,7 +38,7 @@ const router = createBrowserRouter([
   {
     path: "/Dashboard",
     element: (
-      <IsserDashboard />
+      <IssuerDashboard />
     ),
   },
   {
@@ -50,6 +52,13 @@ const router = createBrowserRouter([
     path: "/files/:uuid",
     element: (
       <FilePage />
+    ),
+  },
+
+  {
+    path: "/connect-cnms",
+    element: (
+      <CNMSPage />
     ),
   },
 ]);

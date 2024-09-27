@@ -77,6 +77,10 @@ const dataSchema = new Schema(
       enum: ['issued', 'in_progress', 'rejected','audited','withdrawn'],
       default: 'in_progress',
       required: true,
+    },
+    tokenOnChainId: {
+      type: String, // New field added
+      required: false, // Optional field
     }
   },
   {
