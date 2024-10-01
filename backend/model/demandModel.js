@@ -88,4 +88,4 @@ const dataSchema = new Schema(
   }
 );
 
-module.exports = model('Data', dataSchema);
+module.exports = dataSchema;

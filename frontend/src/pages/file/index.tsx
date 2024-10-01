@@ -195,7 +195,7 @@ function UploadPage() {
   
       // Fetch certificates after posting to the database
       const fetchedCertificates = await fetchCertificates();
-  
+      
       // Create collections and mint tokens based on fetched certificates
       await createCollectionsAndMintTokens(fetchedCertificates);
   
@@ -211,7 +211,7 @@ function UploadPage() {
 // Fetch Certificates from API (returning the certificates instead of using state)
 const fetchCertificates = async (): Promise<Certificate[]> => {
   try {
-    const response = await fetch("http://localhost:3000/demand/getDemand");
+    const response = await fetch("http://localhost:3000/demand/certificatesInProgress");
     if (!response.ok) {
       throw new Error(`Error fetching data: ${response.statusText}`);
     }
@@ -354,17 +354,42 @@ const fetchCertificates = async (): Promise<Certificate[]> => {
         setTransactionHash(mintHash);
         }
         
-        const tokensAfterMint = await aptos.getAccountOwnedTokens({
-          accountAddress: accountAdmin.accountAddress,
-        });
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        const findTokenWithRetry = async (targetTokenName: string, maxRetries: number = 3, delayMs: number = 2000) => {
+          let attempts = 0;
         
-        // Define the target token name you're searching for
+          while (attempts < maxRetries) {
+            // Fetch the tokens after mint
+            const tokensAfterMint = await aptos.getAccountOwnedTokens({
+              accountAddress: accountAdmin.accountAddress,
+            });
+        
+            // Search for the token by its name
+            const token = tokensAfterMint.find(
+              (token: any) => token.current_token_data.token_name === targetTokenName
+            );
+        
+            if (token) {
+              return token; // Return the found token if it matches
+            }
+        
+            // If token is not found, retry after a delay
+            attempts++;
+            if (attempts < maxRetries) {
+              console.log(`Retry ${attempts}/${maxRetries}: Token not found. Retrying in ${delayMs}ms...`);
+              await delay(delayMs);
+            }
+          }
+        
+          // If token is not found after maxRetries
+          return null;
+        };
+
+        // Define the target token name for searching
         const targetTokenName = certificate.RazonSocial + "'s GO - ID: " + certificate.id.toString();
-        
-        // Search for the token by its name
-        const token = tokensAfterMint.find(
-          (token: any) => token.current_token_data.token_name === targetTokenName
-        );
+
+        const token = await findTokenWithRetry(targetTokenName);
         
         if (token) {
           console.log("Token found:", token.current_token_data?.token_data_id);

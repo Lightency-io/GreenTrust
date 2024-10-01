@@ -1,11 +1,12 @@
 const bcrypt = require('bcryptjs');
-const User = require('../model/userModel.js');
+const { getGreenTrustUserModel } = require('../db.js');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 
 async function SignUp(req, res) {
   const emailValid = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
+  const User = getGreenTrustUserModel();
+  console.log(User)
   try {
     // Get User Input
     const {
@@ -84,6 +85,8 @@ async function SignUp(req, res) {
 }
 
 async function SignIn(req, res) {
+  const User = getGreenTrustUserModel();
+  console.log(User)
     try {
         let token = ""
         const { email, password } = req.body

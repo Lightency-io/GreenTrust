@@ -12,7 +12,7 @@ const userRoute = require('./routes/userRouter.js');
 const mongoose = require("mongoose")
 const demandController = require('./controller/demandController.js');
 const demandRoute = require('./routes/demandRoute.js');
-
+const { initializeDatabases } = require('./db.js');
 const app = express()
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
@@ -26,20 +26,67 @@ app.use("/auth",userRoute)
 app.get("/healthy", (req, res) => {return res.json({msg : 'Hello World!'})});
 
 
-//db connection
-const database = "GreenTrust" 
-const hostname = '127.0.0.1'
+// const database1 = "GreenTrust";
+// const hostname1 = '127.0.0.1';
 
-mongoose.set('debug', true)
-mongoose.Promise = global.Promise
-mongoose
-    .connect(`mongodb://${hostname}:27017/${database}`)
-    .then(() => {
-        console.log(`connected to  ${database}`)
-    })
-    .catch(err => {
-        console.log(err)
-    })
+// const database2 = "EMSData";
+// const hostname2 = '127.0.0.1';
+
+// // Initialize models as null to avoid direct use before they are defined
+// let GreenTrustModel = null;
+// let EMSDataModel = null;
+
+// const connectionGreenTrustPromise = new Promise((resolve, reject) => {
+//     const connectionGreenTrust = mongoose.createConnection(`mongodb://${hostname1}:27017/${database1}`, {
+//         useNewUrlParser: true,
+//         useUnifiedTopology: true
+//     });
+
+//     connectionGreenTrust.on('connected', () => {
+//         console.log(`Connected to database: ${database1}`);
+//         GreenTrustModel = connectionGreenTrust.model('Data', Data);
+//         resolve(GreenTrustModel);
+//     });
+
+//     connectionGreenTrust.on('error', (err) => {
+//         console.error(`Error connecting to database ${database1}:`, err);
+//         reject(err);
+//     });
+// });
+
+// const connectionEMSDataPromise = new Promise((resolve, reject) => {
+//     const connectionEMSData = mongoose.createConnection(`mongodb://${hostname2}:27017/${database2}`, {
+//         useNewUrlParser: true,
+//         useUnifiedTopology: true
+//     });
+
+//     connectionEMSData.on('connected', () => {
+//         console.log(`Connected to database: ${database2}`);
+//         EMSDataModel = connectionEMSData.model('Data', Data, 'certificates');
+//         resolve(EMSDataModel);
+//     });
+
+//     connectionEMSData.on('error', (err) => {
+//         console.error(`Error connecting to database ${database2}:`, err);
+//         reject(err);
+//     });
+// });
+
+// // Export Promises that resolve to the initialized models
+// module.exports = {
+//     getGreenTrustModel: connectionGreenTrustPromise,
+//     getEMSDataModel: connectionEMSDataPromise
+// };
+// const findEMSData = async () => {
+//     try {
+//         const data = await EMSDataModel.find();
+//         console.log("EMSData Data:", data);
+//     } catch (err) {
+//         console.error("Error fetching data from EMSData:", err);
+//     }
+// };
+
+// findEMSData()
 
 // the unbreakable filter 🤪
 const filter = function (_, file, cb) {
@@ -182,6 +229,14 @@ app.use(function (err, req, res, next) {
     res.status(402).json({ error: err.message })
 })
 
-app.listen(3000, function () {
-    console.log("Server is running on port 3000")
-})
+// Initialize the databases and then start the server
+initializeDatabases()
+    .then(() => {
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error("Failed to initialize databases: ", err);
+    });

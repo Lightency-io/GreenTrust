@@ -231,8 +231,8 @@ const CNMSPage = () => {
         throw new Error('Failed to fetch certificates');
       }
   
-      const data = await response.json();
-      const certificatesInProgress = data.certificates;
+      const certificatesInProgress = await response.json();
+      // const certificatesInProgress = data.certificates;
   
       if (!certificatesInProgress.length) {
         setError("No certificates found with status 'in_progress'");

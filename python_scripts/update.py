@@ -51,6 +51,24 @@ def insert_data_from_file(db, collection_name, file_path, file_type='csv'):
         ]]
 
 
+        # Set data types explicitly
+        df_filtered = df_filtered.astype({
+            'id': 'str',
+            'CIF': 'str',
+            'RazonSocial': 'str',
+            'CodigoPlanta': 'str',
+            'CIL': 'str',
+            'Año': 'str',
+            'Mes': 'str',
+            'FechaInicio': 'datetime64[ns]',  # Convert to datetime
+            'FechaFin': 'datetime64[ns]',     # Convert to datetime
+            'GarantiaSolicitada': 'float', # Convert to float
+            'TipoCesion': 'str',
+            'idContratoGDO': 'str',
+            'idDatosGestion': 'str',
+            'Potencia': 'float',           # Convert to float
+            'Tecnologia': 'str'
+        })
 
         # Add default values for the missing fields ('sum', 'status', 'tokenOnChainId')
         df_filtered['sum'] = df_filtered['Potencia'] + df_filtered['GarantiaSolicitada']

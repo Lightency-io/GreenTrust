@@ -29,7 +29,7 @@ router.put('/updateTokenOnChainId/:razonSocial/:id', async (req, res) => {
 router.get('/certificatesInProgress', async (req, res) => {
     try {
       const certificates = await saveContracts.fetchCertificatesInProgress();
-      res.json({ certificates });
+      res.json(certificates);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -50,4 +50,7 @@ router.put('/updateCertificateStatus/:razonSocial/:id', async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   });
+
+
+router.post('/verifyCertificate', saveContracts.verifyCertificate);
 module.exports = router;

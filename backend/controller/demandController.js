@@ -1,13 +1,20 @@
-const Data = require('../model/demandModel.js'); 
+//const Data = require('../model/demandModel.js'); 
 const utils = require('../middleware/utils.js');
+const { getGreenTrustModel, getEMSDataModel } = require('../db.js');
 const sqlite3 = require('sqlite3').verbose();
 
 
-const db = new sqlite3.Database(':memory:');
 
+
+
+const db = new sqlite3.Database(':memory:');
+// const Data = GreenTrustModel
 let files = {}
 // Function to save contracts to MongoDB
 const saveContracts = async (data) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
   try {
     const contractsArray = data; // Get the array of contracts from the request body
     
@@ -41,6 +48,9 @@ async function getDataRow(req, res, next) {
 }
 
 async function getDemand(req, res, next) {
+  const GreenTrustModel = getGreenTrustModel();
+  console.log(GreenTrustModel)
+  const Data = GreenTrustModel
     try {
         const demand = await Data.find();
         res.status(200).json(demand);
@@ -55,7 +65,9 @@ const updateTokenOnChainId = async (razonSocial, id, tokenOnChainId) => {
   if (!tokenOnChainId) {
     throw new Error('tokenOnChainId is required');
   }
-
+  const GreenTrustModel = getGreenTrustModel();
+  console.log(GreenTrustModel)
+  const Data = GreenTrustModel
   try {
     // Find the document by both RazonSocial and id
     const updatedData = await Data.findOneAndUpdate(
@@ -78,6 +90,9 @@ const updateTokenOnChainId = async (razonSocial, id, tokenOnChainId) => {
 
 // Function to fetch all certificates with status "in_progress"
 const fetchCertificatesInProgress = async () => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
   try {
     // Find all documents where the status is "in_progress"
     const certificates = await Data.find({ status: 'in_progress' });
@@ -85,7 +100,7 @@ const fetchCertificatesInProgress = async () => {
     if (!certificates.length) {
       throw new Error('No certificates found with status "in_progress"');
     }
-
+    console.log(certificates)
     // Return the list of certificates
     return certificates;
   } catch (error) {
@@ -93,9 +108,56 @@ const fetchCertificatesInProgress = async () => {
   }
 };
 
+// Function to verify if the certificate exists in the EMSDataModel
+async function verifyCertificate(req, res) {
+  const EMSDataModel = getEMSDataModel();
+  try {
+      // Extract the certificate data from the request body
+      const certificateData = req.body;
+
+      // Destructure the certificateData to exclude tokenOnChainId and sum fields
+      const {
+          _id,
+          status,
+          __v,
+          createdAt,
+          updatedAt,
+          tokenOnChainId, // excluded
+          sum, 
+          FechaInicio,
+          FechaFin,           // excluded
+          ...criteria     // spread the rest of the fields into `criteria`
+      } = certificateData;
+
+      // Search for a matching document in EMSDataModel
+      console.log(criteria)
+      const matchingCertificate = await EMSDataModel.findOne(criteria);
+
+
+      // Check if a matching certificate was found
+      if (matchingCertificate) {
+          return res.status(200).json({
+              message: 'Certificate is valid.',
+              certificate: matchingCertificate
+          });
+      } else {
+          return res.status(404).json({
+              message: 'Certificate not found. Invalid certificate.'
+          });
+      }
+  } catch (error) {
+      console.error('Error verifying certificate:', error);
+      return res.status(500).json({ error: 'An error occurred while verifying the certificate.' });
+  }
+}
+
+
 
 // Function to update the status of a certificate in the database
 const updateCertificateStatusInDB = async (razonSocial, id, status) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
   try {
     const updatedCertificate = await Data.findOneAndUpdate(
       { RazonSocial: razonSocial, id },  // Match by both RazonSocial and id
@@ -114,4 +176,4 @@ const updateCertificateStatusInDB = async (razonSocial, id, status) => {
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB};
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate};
