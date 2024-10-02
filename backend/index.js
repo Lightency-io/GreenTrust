@@ -13,6 +13,7 @@ const mongoose = require("mongoose")
 const demandController = require('./controller/demandController.js');
 const demandRoute = require('./routes/demandRoute.js');
 const { initializeDatabases } = require('./db.js');
+const { getGreenTrustModel, getEMSDataModel } = require('./db.js');
 const app = express()
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
@@ -229,9 +230,25 @@ app.use(function (err, req, res, next) {
     res.status(402).json({ error: err.message })
 })
 
+
+async function addFieldToExistingDocs() {
+    const Data = getGreenTrustModel();
+    try {
+      const result = await Data.updateMany(
+        { demanderOrganization: { $exists: false } }, // Find documents without this field
+        { $set: { demanderOrganization: "Nexus" } } // Set a default value
+      );
+      console.log(`Documents updated: ${result.nModified}`);
+    } catch (error) {
+      console.error('Error updating documents:', error);
+    } finally {
+      mongoose.disconnect();
+    }
+  }
 // Initialize the databases and then start the server
 initializeDatabases()
     .then(() => {
+        //addFieldToExistingDocs()
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
@@ -240,3 +257,5 @@ initializeDatabases()
     .catch((err) => {
         console.error("Failed to initialize databases: ", err);
     });
+
+

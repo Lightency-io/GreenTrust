@@ -1,6 +1,11 @@
-import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount } from "@aptos-labs/ts-sdk";
 import React, { useEffect, useState } from 'react';
 import { HexString } from "aptos";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { getAddressFromAccountOrAddress } from "aptos";
+
+
+
 
 interface Certificate {
   id: number;
@@ -12,6 +17,8 @@ interface Certificate {
   Potencia: string;
   status: string;
 }
+
+
 
 const config = new AptosConfig({ network: Network.DEVNET });
 const aptos = new Aptos(config);
@@ -28,6 +35,21 @@ function stringToHex(str: string): string {
   }
 
 const CNMSPage = () => {
+  const {
+    connect,
+    account,
+    network,
+    connected,
+    disconnect,
+    wallet,
+    wallets,
+    signAndSubmitTransaction,
+    signTransaction,
+    signMessage,
+    signMessageAndVerify,
+  } = useWallet();
+  const walletAccount = account;
+console.log(walletAccount)
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [tokenAddress, setTokenAddress] = useState<string>("");
@@ -35,6 +57,8 @@ const CNMSPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [digitalAssetAddress, setDigitalAssetAddress] = useState('');
+  const [recipient, setRecipient] = useState('');
 
   // Fetch Certificates from API
   useEffect(() => {
@@ -95,7 +119,7 @@ const CNMSPage = () => {
   const mintToken = async (certificate: Certificate): Promise<string> => {
     //console.log(certificate)
 
-
+    
     const CIFHex = new HexString(stringToHex(certificate.CIF));
     const razonSocialHex = new HexString(stringToHex(certificate.RazonSocial));
     const fechaInicioHex = new HexString(stringToHex(certificate.FechaInicio));
@@ -218,6 +242,13 @@ const CNMSPage = () => {
 
 
 
+
+
+
+
+
+
+
   
   const handleUpdateCertificates = async () => {
     setLoading(true);
@@ -245,9 +276,35 @@ const CNMSPage = () => {
         const tokenAddress = certificate.tokenOnChainId;
   
         if (!tokenAddress) {
-          throw new Error(`tokenOnChainId is missing for certificate: ${certificate.id}`);
+          console.warn(`Skipping certificate with missing tokenOnChainId: ${certificate.id}`);
+          continue; // Skip to the next certificate if tokenOnChainId is missing
         }
-  
+        
+      // Step 2.1: Convert GarantiaSolicitada to a float
+      const certificateToVerify = {
+        ...certificate,
+        GarantiaSolicitada: parseFloat(certificate.GarantiaSolicitada)
+      };
+
+      // Step 2.2: Verify the certificate
+      const verificationResponse = await fetch('http://localhost:3000/demand/verifyCertificate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(certificateToVerify),
+      });
+
+      if (!verificationResponse.ok) {
+        console.warn(`Skipping certificate as verification failed for ${certificate.id}`);
+        continue; // Skip to the next certificate if verification fails
+      }
+
+      const verificationResult = await verificationResponse.json();
+      console.log(`Verification result for ${certificate.id}:`, verificationResult);
+
+
+      
         // Update status on-chain to "issued"
         const txnHash = await updateStatus(tokenAddress, "issued");
         console.log(`Transaction for ${certificate.id} completed with hash: ${txnHash}`);
@@ -298,6 +355,89 @@ const CNMSPage = () => {
     }
   };
 
+
+
+// Function to handle the digital asset transfer
+const transferDigitalAsset = async (digitalAssetAddress: string, recipient: string) => {
+  const recipientAccount = new AccountAddress(new HexString(recipient).toUint8Array())
+
+  // try {
+  //   // Step 1: Create transfer transaction
+  //   // const transferTransaction = await aptos.transferDigitalAssetTransaction({
+  //   //   sender: senderAccount,
+  //   //   digitalAssetAddress: digitalAssetAddress,
+  //   //   recipient: recipientAccount,
+  //   // });
+  //   const transferTransaction = await aptos.transaction.build.simple({
+  //     sender: accountAdmin.accountAddress,
+  //     data: {
+  //       function: "0x1::object::transfer",
+  //       typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+  //       functionArguments: [
+  //           digitalAssetAddress,
+  //           recipient
+  //       ],
+  //     },
+  //   });
+
+
+  //   // Step 2: Sign and submit the transaction
+  //   const committedTxn = await aptos.signAndSubmitTransaction({
+  //     signer: accountAdmin,
+  //     transaction: transferTransaction,
+  //   });
+
+  //   // Step 3: Wait for the transaction to be confirmed
+  //   const pendingTxn = await aptos.waitForTransaction({
+  //     transactionHash: committedTxn.hash,
+  //   });
+
+  //   console.log('Transaction completed:', pendingTxn);
+  //   return pendingTxn;
+  // } catch (error) {
+  //   console.error('Error during asset transfer:', error);
+  //   throw new Error('Failed to transfer digital asset.');
+  // }
+
+
+  const response = await signAndSubmitTransaction({
+    sender: walletAccount?.address,
+    data: {
+        function: "0x1::object::transfer",
+        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        functionArguments: [
+            digitalAssetAddress,
+            recipient
+        ],
+    },
+  });
+  // if you want to wait for transaction
+  try {
+    await aptos.waitForTransaction({ transactionHash: response });
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
+  // Function to handle form submission
+  const handleTransferSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Call the transfer function with the input values
+      const transactionResult = await transferDigitalAsset(digitalAssetAddress, recipient);
+      setSuccess('Digital asset transferred successfully.');
+    } catch (err) {
+      setError('Error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <h1>Create Collections and Mint Tokens from Certificates</h1>
@@ -342,6 +482,35 @@ const CNMSPage = () => {
       </button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {success && <p style={{ color: 'green' }}>{success}</p>}
+
+
+
+      <h1>Transfer Digital Asset</h1>
+      <form onSubmit={handleTransferSubmit}>
+        <div>
+          <label>Digital Asset Address:</label>
+          <input
+            type="text"
+            value={digitalAssetAddress}
+            onChange={(e) => setDigitalAssetAddress(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>Recipient Address:</label>
+          <input
+            type="text"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Transferring...' : 'Transfer Digital Asset'}
+        </button>
+      </form>
+      {success && <p style={{ color: 'green' }}>{success}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
     
   );

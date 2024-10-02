@@ -35,6 +35,40 @@ router.get('/certificatesInProgress', async (req, res) => {
     }
   });
 
+    // Route to fetch all certificates with status
+router.get('/certificatesWithStatus/:status', async (req, res) => {
+  const {status} = req.params;
+  console.log(status)
+  try {
+    const certificates = await saveContracts.fetchCertificateswithStatus(status);
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.get('/certificatesForCompanyWithStatus/:razonSocial/:status', async (req, res) => {
+  const {razonSocial, status} = req.params;
+  console.log(razonSocial)
+  try {
+    const certificates = await saveContracts.fetchCertificatesCompanywithStatus(razonSocial, status);
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.get('/certificateWithId/:id', async (req, res) => {
+  const {id} = req.params;
+  try {
+    const certificates = await saveContracts.fetchCertificatewithId(id);
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
   // API route to update the certificate status in the database
 router.put('/updateCertificateStatus/:razonSocial/:id', async (req, res) => {

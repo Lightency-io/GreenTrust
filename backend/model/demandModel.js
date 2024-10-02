@@ -81,7 +81,11 @@ const dataSchema = new Schema(
     tokenOnChainId: {
       type: String, // New field added
       required: false, // Optional field
-    }
+    },
+    demanderOrganization: {
+      type: String,
+      required: true, // You can set this to true or false as per your requirement
+    },
   },
   {
     timestamps: true,

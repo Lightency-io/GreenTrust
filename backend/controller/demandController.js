@@ -23,6 +23,7 @@ const Data = GreenTrustModel
       ...contract,
       FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])), // Convert from timestamp to Date
       FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])), // Convert from timestamp to Date
+      demanderOrganization: "Nexus",
     }));
 
     // Now we save the formatted contracts to MongoDB
@@ -108,6 +109,64 @@ const Data = GreenTrustModel
   }
 };
 
+// Function to fetch all certificates with status
+const fetchCertificateswithStatus = async (status) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is as the parameter
+    const certificates = await Data.find({ status: status });
+
+    if (!certificates.length) {
+      throw new Error(`No certificates found with status ${status}`);
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+// Function to fetch all certificates for company with status
+const fetchCertificatesCompanywithStatus = async (razonSocial, status) => {
+  const GreenTrustModel = getGreenTrustModel();
+const Data = GreenTrustModel
+  try {
+    const certificates = await Data.find({ RazonSocial: razonSocial, status: status });
+
+    if (!certificates.length) {
+      throw new Error(`No certificates found with status ${status}`);
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+// Function to fetch all certificates with status
+const fetchCertificatewithId = async (id) => {
+  const GreenTrustModel = getGreenTrustModel();
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is as the parameter
+    const certificates = await Data.find({ id: id });
+
+    if (!certificates.length) {
+      throw new Error(`No certificates found with status ${id}`);
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
 // Function to verify if the certificate exists in the EMSDataModel
 async function verifyCertificate(req, res) {
   const EMSDataModel = getEMSDataModel();
@@ -176,4 +235,4 @@ const Data = GreenTrustModel
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate};
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId};
