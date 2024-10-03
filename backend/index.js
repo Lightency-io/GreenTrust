@@ -13,7 +13,7 @@ const mongoose = require("mongoose")
 const demandController = require('./controller/demandController.js');
 const demandRoute = require('./routes/demandRoute.js');
 const { initializeDatabases } = require('./db.js');
-const { getGreenTrustModel, getEMSDataModel } = require('./db.js');
+const { getGreenTrustModel, getEMSDataModel, getGreenTrustUserModel } = require('./db.js');
 const app = express()
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true }));
@@ -211,19 +211,48 @@ function get_p(f, r) {
     })
 }
 
-app.post("/download",async (req, res, next) => {
-    const { keys, uuid } = req.body
-    if (!keys) res.status(401).end()
-            const file = files[uuid]
-            if (!file) {
-                next(new Error("File not found"))
-            }
-            const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
-            const recs_exp = (await all_p(stmt_exp))
-            let data = demandController.saveContracts(recs_exp)
-            res.send(data)
-            //TODO create a demand obj consume it from front
-})
+app.post("/download", async (req, res, next) => {
+    try {
+      // Extract keys and uuid from request body
+      const { keys, uuid, userEmail } = req.body;
+  
+      // Check if 'keys' or 'uuid' is missing
+      if (!keys) {
+        return res.status(400).json({ message: "Missing keys in request body." });
+      }
+  
+      if (!uuid) {
+        return res.status(400).json({ message: "Missing uuid in request body." });
+      }
+  
+      // Retrieve the file based on uuid
+      const file = files[uuid];
+      if (!file) {
+        return res.status(404).json({ message: "File not found." });
+      }
+  
+      // Prepare and execute the SQL statement to fetch records
+      const stmt_exp = db.prepare(
+        `SELECT *, SUM(GarantiaSolicitada) as sum FROM ${file.table_id} WHERE id IN (${keys.toString()}) GROUP BY CodigoPlanta`
+      );
+      const recs_exp = await all_p(stmt_exp);
+  
+      // Save the contracts to the database
+      const data = await demandController.saveContracts(recs_exp, userEmail);
+  
+      // Send the saved contracts as response
+      res.status(201).json({
+        message: "Contracts saved successfully.",
+        data,
+      });
+  
+    } catch (error) {
+      console.error("Error in /download route:", error);
+      // Pass the error to Express's error handling middleware
+      res.status(500).json({ message: error.message || "Internal Server Error." });
+    }
+  });
+  
 
 app.use(function (err, req, res, next) {
     console.error(err)
@@ -235,8 +264,8 @@ async function addFieldToExistingDocs() {
     const Data = getGreenTrustModel();
     try {
       const result = await Data.updateMany(
-        { demanderOrganization: { $exists: false } }, // Find documents without this field
-        { $set: { demanderOrganization: "Nexus" } } // Set a default value
+        { status: { $exists: true } }, // Find documents without this field
+        { $set: { status: "in_progress" } } // Set a default value
       );
       console.log(`Documents updated: ${result.nModified}`);
     } catch (error) {

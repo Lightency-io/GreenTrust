@@ -16,6 +16,7 @@ async function SignUp(req, res) {
       organization,
       companyName,
       licence,
+      walletAddress,
     } = req.body;
 
     // Validate required user inputs
@@ -27,6 +28,10 @@ async function SignUp(req, res) {
       )
     ) {
       return res.status(400).send('All fields are required');
+    }
+
+    if (!walletAddress){
+      return res.status(400).send('Wallet Connection Required');
     }
 
     // Validate email format
@@ -70,6 +75,7 @@ async function SignUp(req, res) {
       organization: role === 'demander' || role === 'issuer' ? organization : "Nexus", // Set organization if applicable
       companyName: role === 'auditor' ? companyName : null, // Set companyName if applicable
       licence: role === 'auditor' ? licence : null, // Set licence if applicable
+      walletAddress: walletAddress
     });
 
     // Send success response
@@ -89,12 +95,17 @@ async function SignIn(req, res) {
   console.log(User)
     try {
         let token = ""
-        const { email, password } = req.body
+        const { email, password, walletAddress } = req.body
         if (!(email && password)) {
           res.status(400).send('Required Input')
         }
+
+        if(!walletAddress){
+          res.status(400).send('Wallet Connection Required')
+        }
         const user = await User.findOne({ email: email })
-        if (user && (await bcrypt.compare(password, user.password))) {
+        const existingWalletAddress = user.walletAddress
+        if (user && (await bcrypt.compare(password, user.password)) && existingWalletAddress === walletAddress) {
           dotenv.config()
           token = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, { 
           })
@@ -106,7 +117,29 @@ async function SignIn(req, res) {
         res.status(400).json({ json: err })
       }
 }
+
+// Function to fetch all certificates with status
+const fetchUserWithEmail = async (email) => {
+  const GreenTrustModel = getGreenTrustUserModel();
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is as the parameter
+    const user = await Data.find({ email: email });
+
+    if (!user.length) {
+      throw new Error(`No certificates found with status ${email}`);
+    }
+    console.log(user)
+    // Return the list of certificates
+    return user;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
 module.exports = {
     SignUp,
-    SignIn
+    SignIn,
+    fetchUserWithEmail
   };

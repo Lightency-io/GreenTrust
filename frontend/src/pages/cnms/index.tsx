@@ -16,9 +16,15 @@ interface Certificate {
   Tecnologia: string;
   Potencia: string;
   status: string;
+  demanderEmail: string;
 }
 
-
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  walletAddress: string;
+}
 
 const config = new AptosConfig({ network: Network.DEVNET });
 const aptos = new Aptos(config);
@@ -59,6 +65,7 @@ console.log(walletAccount)
   const [success, setSuccess] = useState<string | null>(null);
   const [digitalAssetAddress, setDigitalAssetAddress] = useState('');
   const [recipient, setRecipient] = useState('');
+  //const [user, setUser] = useState<User>()
 
   // Fetch Certificates from API
   useEffect(() => {
@@ -241,12 +248,59 @@ console.log(walletAccount)
   };
 
 
+  const burnToken = async (tokenAddress: string): Promise<string> => {
+    const transaction = await aptos.transaction.build.simple({
+      sender: accountAdmin.accountAddress,
+      data: {
+        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::burn",
+        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        functionArguments: [
+            tokenAddress
+        ],
+      },
+    });
+
+    const senderAuthenticator = aptos.transaction.sign({
+      signer: accountAdmin,
+      transaction,
+    });
+
+    const pendingTxn = await aptos.transaction.submit.simple({
+      transaction,
+      senderAuthenticator,
+    });
+
+    return pendingTxn.hash;
+  };
 
 
 
 
 
+  const fetchUser = async (email:string) => {
+    setLoading(true);
+    setError(null);
 
+    try {
+      const response = await fetch(`http://localhost:3000/auth/getUserWithEmail/${email}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user');
+      }
+
+      const data = await response.json();
+      return data[0];
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   
@@ -254,7 +308,7 @@ console.log(walletAccount)
     setLoading(true);
     setError(null);
     setSuccess(null);
-  
+    
     try {
       // Step 1: Fetch certificates in progress from the backend
       const response = await fetch('http://localhost:3000/demand/certificatesInProgress');
@@ -273,6 +327,10 @@ console.log(walletAccount)
   
       // Step 2: Iterate over each certificate and update status on-chain and backend
       for (const certificate of certificatesInProgress) {
+
+
+        const user = await fetchUser(certificate.demanderEmail)
+        //console.log("hiiii",user)
         const tokenAddress = certificate.tokenOnChainId;
   
         if (!tokenAddress) {
@@ -304,7 +362,7 @@ console.log(walletAccount)
       console.log(`Verification result for ${certificate.id}:`, verificationResult);
 
 
-      
+
         // Update status on-chain to "issued"
         const txnHash = await updateStatus(tokenAddress, "issued");
         console.log(`Transaction for ${certificate.id} completed with hash: ${txnHash}`);
@@ -329,8 +387,44 @@ console.log(walletAccount)
   
         const updateResult = await updateResponse.json();
         console.log(`Database status for ${certificate.id} updated:`, updateResult);
-      }
+
+
+
+        const recipientAccount = new AccountAddress(new HexString(user?.walletAddress ?? "").toUint8Array())
   
+        const transferTransaction = await aptos.transferDigitalAssetTransaction({
+          sender: accountAdmin,
+          digitalAssetAddress: certificate.tokenOnChainId,
+          recipient: recipientAccount,
+        }); 
+  
+        const committedTxn = await aptos.signAndSubmitTransaction({ signer: accountAdmin, transaction: transferTransaction });
+        const pendingTxn = await aptos.waitForTransaction({ transactionHash: committedTxn.hash });
+        console.log("transfer success, txn:", pendingTxn)
+  
+  
+  
+        const updateTransfer = await fetch(
+          `http://localhost:3000/demand/updateCertificateToTransferred/${certificate.RazonSocial}/${certificate.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+    
+        if (!updateTransfer.ok) {
+          throw new Error(`Failed to update transferred in database for certificate ${certificate.id}`);
+        }
+    
+        const updateTransferResult = await updateTransfer.json();
+        console.log(`Database transferred status for ${certificate.id} updated:`, updateTransferResult);
+      }
+      
+
+
+
       // Step 4: Set success message once all updates are done
       setSuccess("All certificates successfully updated to 'issued' on chain and in the database.");
   
@@ -438,6 +532,25 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
     }
   };
 
+
+    // Function to handle form submission
+    const handleBurnSubmit = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+  
+      try {
+        // Call the transfer function with the input values
+        const transactionResult = await burnToken(digitalAssetAddress);
+        setSuccess('Digital asset transferred successfully.');
+      } catch (err) {
+        setError('Error: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
   return (
     <div>
       <h1>Create Collections and Mint Tokens from Certificates</h1>
@@ -507,6 +620,23 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
         </div>
         <button type="submit" disabled={loading}>
           {loading ? 'Transferring...' : 'Transfer Digital Asset'}
+        </button>
+      </form>
+
+
+      <h1>Burn Digital Asset</h1>
+      <form onSubmit={handleBurnSubmit}>
+        <div>
+          <label>Digital Asset Address:</label>
+          <input
+            type="text"
+            value={digitalAssetAddress}
+            onChange={(e) => setDigitalAssetAddress(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Burning...' : 'Burn Digital Asset'}
         </button>
       </form>
       {success && <p style={{ color: 'green' }}>{success}</p>}

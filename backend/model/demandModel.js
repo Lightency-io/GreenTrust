@@ -86,6 +86,14 @@ const dataSchema = new Schema(
       type: String,
       required: true, // You can set this to true or false as per your requirement
     },
+    demanderEmail: {
+      type: String,
+      required: true, // You can set this to true or false as per your requirement
+    },
+    transferredToDemander: {
+      type: Boolean,
+      required: true, // You can set this to true or false as per your requirement
+    },
   },
   {
     timestamps: true,

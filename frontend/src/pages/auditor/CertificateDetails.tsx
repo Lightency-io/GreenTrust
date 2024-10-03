@@ -21,6 +21,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount } from "@aptos-labs/ts-sdk";
 import { HexString } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import {jwtDecode} from 'jwt-decode';
+
 
 const config = new AptosConfig({ network: Network.DEVNET });
 const aptos = new Aptos(config);
@@ -40,6 +42,17 @@ interface Certificate {
   status: string;
   tokenOnChainId: string;
 }
+
+
+interface DecodedToken {
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      walletAddress: string;
+    };
+    iat?: number; // Optional: for expiration timestamp
+  }
 
 const truncateAddress = (address: string, startLength = 6, endLength = 6) => {
     if (address.length <= startLength + endLength) return address;
@@ -71,6 +84,20 @@ const CertificateDetails = () => {
   const [selectedStatus, setSelectedStatus] = useState('issued');
 
  
+
+  const getCurrentUser = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+  
+    try {
+      const decodedToken: DecodedToken = jwtDecode(token);
+      return decodedToken; // This will contain user info (e.g., userId, email, etc.)
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  };
+
   //function to update status on-chain
   const updateStatus = async (tokenAddress: string, tokenStatus: string): Promise<string> => {
     const transaction = await aptos.transaction.build.simple({
@@ -144,6 +171,9 @@ const handleUpdateCertificate = async (certificate: Certificate, newStatus: stri
   
       // Step 3: Set success message
       setSuccess(`Certificate with ID ${certificate.id} successfully updated to '${newStatus}' on-chain and in the database.`);
+
+
+
     } catch (error: any) {
       console.error("Error updating certificate:", error);
       setError(error.message || "Something went wrong.");

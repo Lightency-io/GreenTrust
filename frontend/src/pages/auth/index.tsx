@@ -1,8 +1,30 @@
 import React, { useState } from 'react';
 import "./HomePage.css";
 import { useNavigate } from "react-router-dom";
+import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
+import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { Alert, Button } from "@mui/material";
+
 
 const AuthPage = () => {
+
+  const {
+    connect,
+    account,
+    network,
+    connected,
+    disconnect,
+    wallet,
+    wallets,
+    signAndSubmitTransaction,
+    signTransaction,
+    signMessage,
+    signMessageAndVerify,
+  } = useWallet();
+  const walletAccount = account;
+  console.log(walletAccount)
+
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true); // Toggle between login and sign up
   const [formData, setFormData] = useState({
@@ -88,19 +110,24 @@ const AuthPage = () => {
   // Submit handler for sign-up or login
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("test")
+    if (!walletAccount) {
+      setErrorMessage('Please connect your wallet to continue.');
+      return;
+    }
     const apiEndpoint = isLogin ? "http://localhost:3000/auth/signIn" : "http://localhost:3000/auth/signUp";
     const body = isLogin
-      ? { email: formData.email, password: formData.password } // Sign-in body
+      ? { email: formData.email, password: formData.password, walletAddress: walletAccount.address } // Sign-in body
       : { // Sign-up body
         email: formData.email,
         password: formData.password,
         role: formData.role,
         companyName: formData.companyName || undefined, // Only include if exists
         licence: formData.licence || undefined, // Only include if exists
-        organization: formData.organization || undefined // Only include if exists
+        organization: formData.organization || undefined, // Only include if exists
+        walletAddress: walletAccount.address
       };
-
+console.log(body)
     try {
       const response = await fetch(apiEndpoint, {
         method: "POST",
@@ -112,11 +139,15 @@ const AuthPage = () => {
       });
 
       const data = await response.json();
+      console.log(data)
 
       if (!response.ok) {
-        setErrorMessage(data.message || "Something went wrong.");
+        setErrorMessage(data.erreur || "Something went wrong.");
         return;
       }
+
+
+      localStorage.setItem('authToken', data.token)
       // Check the role and navigate accordingly
       const userRole = isLogin ? data.role : formData.role; // Assuming login response contains user data with role
 
@@ -133,7 +164,7 @@ const AuthPage = () => {
       alert(isLogin ? 'Login successful!' : 'Sign-up successful!');
 
     } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       setErrorMessage('Failed to connect to the server. Please try again later.');
     }
   };
@@ -141,7 +172,11 @@ const AuthPage = () => {
   return (
     <div className="auth-container">
       <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
-      {errorMessage && <p className="error-message">{errorMessage}</p>}
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorMessage}
+        </Alert>
+      )}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Email</label>
@@ -164,6 +199,7 @@ const AuthPage = () => {
             required
           />
         </div>
+        <div><WalletSelector /></div>
 
         {!isLogin && (
           <div>

@@ -16,7 +16,11 @@ module GreenTrust::guarantee_of_origin {
     use aptos_token_objects::property_map;
     use aptos_token_objects::royalty;
     use aptos_token_objects::token;
-
+    use aptos_std::smart_vector::{Self, SmartVector};
+    use std::string;
+    use std::string_utils::to_string;
+    use std::string::sub_string;
+    use std::string::length;
     /// The collection does not exist
     const ECOLLECTION_DOES_NOT_EXIST: u64 = 1;
     /// The token does not exist
@@ -29,6 +33,45 @@ module GreenTrust::guarantee_of_origin {
     const ETOKEN_NOT_BURNABLE: u64 = 5;
     /// The property map being mutated is not mutable
     const EPROPERTIES_NOT_MUTABLE: u64 = 6;
+
+    const EINDEX_OUT_OF_RANGE: u64 = 7;
+
+    const ECOLLECTION_NAME_EXISTS: u64 = 8;
+
+    const ETOKEN_NAME_EXISTS: u64 = 9;
+
+
+    const CONTRACT_OWNER: vector<u8> = b"0x8729b0d9ddb6b6ce5e84f6d525c4b8d1344178a2b79811af8d9f48441bcb53e0"; 
+
+
+    /// Published under the contract owner's account.
+    struct Config has key {
+        collection_names_list: SmartVector<String>,
+        tokens_names_list: SmartVector<String>,
+        extend_ref: object::ExtendRef,
+    }
+
+
+    #[event]
+    struct UpdatePropertyEvent has drop, store {
+        sender: address,
+        token: address,
+        key: String,
+        type: String,
+        value: vector<u8>
+    }
+
+
+    #[event]
+    struct LogEvent has drop, store {
+        message: String,
+    }
+        // let event = LogEvent{
+        //     message: sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin))))
+        // };
+        // 0x1::event::emit(event);
+
+
 
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     /// Storage state for managing the no-code Collection.
@@ -68,6 +111,113 @@ module GreenTrust::guarantee_of_origin {
         property_mutator_ref: property_map::MutatorRef,
     }
 
+
+
+    /// Initializes the module, creating the manager object, the guild token collection and the whitelist.
+    fun init_module(sender: &signer) {
+
+        let constructor_ref = object::create_object(signer::address_of(sender));
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        // Publish the config resource.
+        move_to(sender, Config { collection_names_list: smart_vector::new(), tokens_names_list: smart_vector::new(), extend_ref});
+    }
+
+    //to be removed in clean deployment!!!!!!!!!!!!!!
+    /// Returns the signer of the guild collection manager object.
+    fun contract_owner(sender: &signer): address acquires Config {
+        let owner = borrow_global<Config>(signer::address_of(sender));
+        let owner_addr = object::address_from_extend_ref(&owner.extend_ref);
+        object::owner(object::address_to_object<object::ObjectCore>(owner_addr))
+    }
+
+
+    public entry fun add_collection_name(admin: &signer, collection_name: String) acquires Config {
+
+        assert!(sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        
+        // Initialize if it doesn't exist
+        if (!exists<Config>(signer::address_of(admin))) {
+        // If it doesn't exist, initialize the module
+            init_module(admin);
+        };
+        assert!(!does_collection_name_exist(collection_name), ECOLLECTION_NAME_EXISTS);
+        let config = borrow_global_mut<Config>(signer::address_of(admin));
+        smart_vector::push_back(&mut config.collection_names_list, collection_name);
+    }
+
+
+    public entry fun remove_collection_name(admin: &signer, collection_name: String) acquires Config {
+
+        assert!(sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        
+        let config = borrow_global_mut<Config>(signer::address_of(admin));
+        let (found, idx)= smart_vector::index_of(&config.collection_names_list, &collection_name);
+        assert!(found, EINDEX_OUT_OF_RANGE);
+        smart_vector::remove(&mut config.collection_names_list, idx);
+    }
+
+
+
+
+    fun does_collection_name_exist(collection_name:String): bool acquires Config{
+        let addr: address = @0x8729b0d9ddb6b6ce5e84f6d525c4b8d1344178a2b79811af8d9f48441bcb53e0;
+        let collection_names_list = &borrow_global<Config>(addr).collection_names_list;
+        smart_vector::contains(collection_names_list, &collection_name)
+    }
+
+    #[view]
+    public fun collection_name_exists(collection_name: String): bool acquires Config {
+        does_collection_name_exist(collection_name)
+    }
+
+    
+    
+    public entry fun add_token_name(admin: &signer, token_name: String) acquires Config {
+
+        assert!(sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        assert!(!does_token_name_exist(token_name), ECOLLECTION_NAME_EXISTS);
+        let config = borrow_global_mut<Config>(signer::address_of(admin));
+        smart_vector::push_back(&mut config.tokens_names_list, token_name);
+    }
+
+    public entry fun remove_token_name(admin: &signer, token_name: String) acquires Config {
+
+        assert!(sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        
+        let config = borrow_global_mut<Config>(signer::address_of(admin));
+        let (found, idx)= smart_vector::index_of(&config.tokens_names_list, &token_name);
+        assert!(found, EINDEX_OUT_OF_RANGE);
+        smart_vector::remove(&mut config.tokens_names_list, idx);
+    }
+
+    fun does_token_name_exist(token_name:String): bool acquires Config{
+        let addr: address = @0x8729b0d9ddb6b6ce5e84f6d525c4b8d1344178a2b79811af8d9f48441bcb53e0;
+        let tokens_names_list = &borrow_global<Config>(addr).tokens_names_list;
+        smart_vector::contains(tokens_names_list, &token_name)
+    }
+
+    #[view]
+    public fun token_name_exists(token_name: String): bool acquires Config {
+        does_collection_name_exist(token_name)
+    }
+
+
+    //to be removed in clean deployment!!!!!!!!!!!!!!
+    public fun test(admin: &signer): String{
+        to_string<address>(&signer::address_of(admin))
+    }
+
+    public entry fun clear_config(admin: &signer) acquires Config{
+
+        assert!(sub_string(&to_string<address>(&signer::address_of(admin)),1, length(&to_string<address>(&signer::address_of(admin)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        
+        let config = borrow_global_mut<Config>(signer::address_of(admin));
+
+        smart_vector::clear(&mut config.tokens_names_list);
+        smart_vector::clear(&mut config.collection_names_list);
+
+    }
+
     /// Create a new collection
     public entry fun create_collection(
         creator: &signer,
@@ -85,7 +235,8 @@ module GreenTrust::guarantee_of_origin {
         tokens_freezable_by_creator: bool,
         royalty_numerator: u64,
         royalty_denominator: u64,
-    ) {
+    ) acquires Config {
+        assert!(sub_string(&to_string<address>(&signer::address_of(creator)),1, length(&to_string<address>(&signer::address_of(creator)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
         create_collection_object(
             creator,
             description,
@@ -103,6 +254,7 @@ module GreenTrust::guarantee_of_origin {
             royalty_numerator,
             royalty_denominator
         );
+        add_collection_name(creator, name);
     }
 
     public fun create_collection_object(
@@ -171,8 +323,11 @@ module GreenTrust::guarantee_of_origin {
         property_keys: vector<String>,
         property_types: vector<String>,
         property_values: vector<vector<u8>>,
-    ) acquires GOCollection, GOToken {
+    ) acquires GOCollection, GOToken, Config {
+        assert!(sub_string(&to_string<address>(&signer::address_of(creator)),1, length(&to_string<address>(&signer::address_of(creator)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
+        assert!(!does_token_name_exist(name), ETOKEN_NAME_EXISTS);
         mint_token_object(creator, collection, description, name, uri, property_keys, property_types, property_values);
+        add_token_name(creator, name);
     }
 
     /// Mint a token into an existing collection, and retrieve the object / address of the token.
@@ -223,6 +378,7 @@ module GreenTrust::guarantee_of_origin {
         property_values: vector<vector<u8>>,
         soul_bound_to: address,
     ) acquires GOCollection {
+        assert!(sub_string(&to_string<address>(&signer::address_of(creator)),1, length(&to_string<address>(&signer::address_of(creator)))) == string::utf8(CONTRACT_OWNER), ENOT_CREATOR );
         mint_soul_bound_token_object(
             creator,
             collection,
@@ -504,6 +660,7 @@ module GreenTrust::guarantee_of_origin {
         type: String,
         value: vector<u8>,
     ) acquires GOCollection, GOToken {
+
         let go_token = authorized_borrow(&token, creator);
         assert!(
             are_properties_mutable(token),
@@ -511,6 +668,16 @@ module GreenTrust::guarantee_of_origin {
         );
 
         property_map::update(&go_token.property_mutator_ref, &key, type, value);
+
+        let event = UpdatePropertyEvent{
+            sender: signer::address_of(creator),
+            token: object::object_address(&token),
+            key: key,
+            type: type,
+            value: value
+        };
+
+        0x1::event::emit(event);
     }
 
     public entry fun update_typed_property<T: key, V: drop>(

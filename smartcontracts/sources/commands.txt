@@ -1,1 +1,5 @@
-aptos move run --function-id 0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::aptos_token_test::create_collection --args "string:lightency_collection_test" u64:100 "string:lightency_collection" "string:www.lightency.io" "bool:true" "bool:false" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" u64:0 u64:100 
+aptos move run --function-id 0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::create_collection --args "string:lightency_collection_test" u64:100 "string:lightency_collection" "string:www.lightency.io" "bool:true" "bool:false" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" "bool:true" u64:0 u64:100 
+
+
+
+aptos move run --function-id 0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::init_module --args "string:0x8729b0d9ddb6b6ce5e84f6d525c4b8d1344178a2b79811af8d9f48441bcb53e0"

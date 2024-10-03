@@ -86,5 +86,19 @@ router.put('/updateCertificateStatus/:razonSocial/:id', async (req, res) => {
   });
 
 
+  router.put('/updateCertificateToTransferred/:razonSocial/:id', async (req, res) => {
+    const { razonSocial, id } = req.params;
+  
+    try {
+      // Call the controller function to update the status in the database
+      const updatedCertificate = await saveContracts.updateCertificateToTransferred(razonSocial, id);
+      
+      res.json({ message: 'Certificate updated to transferred successfully', updatedCertificate });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+
 router.post('/verifyCertificate', saveContracts.verifyCertificate);
 module.exports = router;

@@ -10,28 +10,41 @@ const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(':memory:');
 // const Data = GreenTrustModel
 let files = {}
-// Function to save contracts to MongoDB
-const saveContracts = async (data) => {
+const saveContracts = async (data, userEmail) => {
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  const Data = GreenTrustModel;
+  
   try {
     const contractsArray = data; // Get the array of contracts from the request body
-    
+
     // Format `FechaInicio` and `FechaFin` from timestamp to Date objects
     const formattedContracts = contractsArray.map(contract => ({
       ...contract,
       FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])), // Convert from timestamp to Date
       FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])), // Convert from timestamp to Date
       demanderOrganization: "Nexus",
+      demanderEmail: userEmail,
+      transferredToDemander: false
     }));
 
-    // Now we save the formatted contracts to MongoDB
-    const savedData = await Data.insertMany(formattedContracts);
+    // Iterate over each formatted contract and check if it exists in the database
+    const savedContracts = [];
+    for (const contract of formattedContracts) {
+      const existingContract = await Data.findOne({ id: contract.id });
 
-    return savedData;
+      if (!existingContract) {
+        // If the contract does not exist, insert it
+        const savedContract = await Data.create(contract);
+        savedContracts.push(savedContract);
+      } else {
+        throw new Error(`Demand with ID ${contract.id} already exists. Skipping...`);
+      }
+    }
+
+    return savedContracts;
   } catch (error) {
     console.error('Error saving contracts to MongoDB:', error);
+    throw error
   }
 };
 
@@ -99,7 +112,9 @@ const Data = GreenTrustModel
     const certificates = await Data.find({ status: 'in_progress' });
 
     if (!certificates.length) {
-      throw new Error('No certificates found with status "in_progress"');
+      console.log("no certificates found");
+      //throw new Error('No certificates found with status "in_progress"');
+      
     }
     console.log(certificates)
     // Return the list of certificates
@@ -184,7 +199,10 @@ async function verifyCertificate(req, res) {
           tokenOnChainId, // excluded
           sum, 
           FechaInicio,
-          FechaFin,           // excluded
+          FechaFin,
+          demanderOrganization,
+          demanderEmail,
+          transferredToDemander,           // excluded
           ...criteria     // spread the rest of the fields into `criteria`
       } = certificateData;
 
@@ -235,4 +253,27 @@ const Data = GreenTrustModel
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId};
+// Function to update the status of a certificate in the database
+const updateCertificateToTransferred = async (razonSocial, id) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
+  try {
+    const updatedCertificate = await Data.findOneAndUpdate(
+      { RazonSocial: razonSocial, id },  // Match by both RazonSocial and id
+      { transferredToDemander: true },  // Update the transferredToDemander field
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedCertificate) {
+      throw new Error('Certificate not found');
+    }
+
+    return updatedCertificate;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred};

@@ -12,6 +12,7 @@ import isBetween from 'dayjs/plugin/isBetween'
 import App from "../Nav/Menu.tsx";
 import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex } from "@aptos-labs/ts-sdk";
 import { HexString } from "aptos";
+import {jwtDecode} from 'jwt-decode';
 
 dayjs.extend(isBetween)
 
@@ -178,30 +179,64 @@ function UploadPage() {
     document.body.removeChild(element);
   }
 
-  const down = async () => {
-    setLoading(true);
+  interface DecodedToken {
+    user: {
+      id: string;
+      email: string;
+      role: string;
+    };
+    iat?: number; // Optional: for expiration timestamp
+  }
+
+  const getCurrentUser = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
   
     try {
+      const decodedToken: DecodedToken = jwtDecode(token);
+      return decodedToken; // This will contain user info (e.g., userId, email, etc.)
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  };
+  const down = async () => {
+    setLoading(true);
+    
+  const user = getCurrentUser();
+
+    try {
       // Post data to the database first
-      await fetch('http://localhost:3000/download', {
-        body: JSON.stringify({ keys: selectedRowKeys, rows: selectedRows, uuid: uuid }),
+      const response = await fetch('http://localhost:3000/download', {
+        body: JSON.stringify({ keys: selectedRowKeys, rows: selectedRows, uuid: uuid, userEmail: user?.user.email }),
         method: "POST",
         headers: {
           "content-type": "application/json"
         }
       });
+    
+      const result = await response.json()
+      // Check if the response is not okay (status code not in the range 200-299)
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${result.message}`);
+      }
   
       message.success("Demand created successfully", 2);
   
       // Fetch certificates after posting to the database
       const fetchedCertificates = await fetchCertificates();
+
+      if (!fetchedCertificates || fetchedCertificates.length === 0) {
+        console.log("No certificates found to process.");
+        return; // Exit the function early since there are no certificates to process
+      }
       
       // Create collections and mint tokens based on fetched certificates
       await createCollectionsAndMintTokens(fetchedCertificates);
   
     } catch (error) {
       console.error("Error in down function:", error);
-      message.error("Failed to create demand or perform blockchain operations", 2);
+      message.error("Failed to create demand or perform blockchain operations"+error, 2);
     } finally {
       setLoading(false);
     }

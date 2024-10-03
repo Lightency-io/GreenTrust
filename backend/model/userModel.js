@@ -41,6 +41,10 @@ const userSchema = new Schema(
       type: String,
       enum: ['Nexus', 'Steg', 'ENIT', 'CNMC', 'Auditor', 'element3'],
       default: 'Nexus',
+    },
+    walletAddress: {
+      type: String,
+      required: true
     }
   },
   {
