@@ -528,7 +528,7 @@ module GreenTrust::guarantee_of_origin {
         borrow_global<GOToken>(token_address)
     }
 
-    public entry fun burn<T: key>(creator: &signer, token: Object<T>) acquires GOToken {
+    public entry fun burn<T: key>(creator: &signer, token: Object<T>) acquires GOToken, Config {
         let go_token = authorized_borrow(&token, creator);
         assert!(
             option::is_some(&go_token.burn_ref),
@@ -542,8 +542,14 @@ module GreenTrust::guarantee_of_origin {
             mutator_ref: _,
             property_mutator_ref,
         } = go_token;
+        remove_token_name(creator,token::name<T>(token));
         property_map::burn(property_mutator_ref);
         token::burn(option::extract(&mut burn_ref));
+        // let event = LogEvent{
+        //     message: token::name<T>(token)
+        // };
+        // 0x1::event::emit(event);
+        
     }
 
     public entry fun freeze_transfer<T: key>(creator: &signer, token: Object<T>) acquires GOCollection, GOToken {
