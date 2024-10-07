@@ -122,13 +122,13 @@ module GreenTrust::guarantee_of_origin {
         move_to(sender, Config { collection_names_list: smart_vector::new(), tokens_names_list: smart_vector::new(), extend_ref});
     }
 
-    //to be removed in clean deployment!!!!!!!!!!!!!!
-    /// Returns the signer of the guild collection manager object.
-    fun contract_owner(sender: &signer): address acquires Config {
-        let owner = borrow_global<Config>(signer::address_of(sender));
-        let owner_addr = object::address_from_extend_ref(&owner.extend_ref);
-        object::owner(object::address_to_object<object::ObjectCore>(owner_addr))
-    }
+    // //to be removed in clean deployment!!!!!!!!!!!!!!
+    // /// Returns the signer of the guild collection manager object.
+    // fun contract_owner(sender: &signer): address acquires Config {
+    //     let owner = borrow_global<Config>(signer::address_of(sender));
+    //     let owner_addr = object::address_from_extend_ref(&owner.extend_ref);
+    //     object::owner(object::address_to_object<object::ObjectCore>(owner_addr))
+    // }
 
 
     public entry fun add_collection_name(admin: &signer, collection_name: String) acquires Config {
@@ -203,9 +203,9 @@ module GreenTrust::guarantee_of_origin {
 
 
     //to be removed in clean deployment!!!!!!!!!!!!!!
-    public fun test(admin: &signer): String{
-        to_string<address>(&signer::address_of(admin))
-    }
+    // public fun test(admin: &signer): String{
+    //     to_string<address>(&signer::address_of(admin))
+    // }
 
     public entry fun clear_config(admin: &signer) acquires Config{
 

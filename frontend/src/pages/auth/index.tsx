@@ -152,11 +152,11 @@ console.log(body)
       const userRole = isLogin ? data.role : formData.role; // Assuming login response contains user data with role
 
       if (userRole === 'auditor') {
-        navigate('/dashboard/auditor');
+        navigate('/auditor');
       } else if (userRole === 'issuer') {
         navigate('/Dashboard');
       } else if (userRole === 'demander') {
-        navigate('/upload');
+        navigate('/demander');
       } else {
         alert('Unknown role');
       }

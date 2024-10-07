@@ -513,8 +513,6 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
   }
 };
 
-
-  // Function to handle form submission
   const handleTransferSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

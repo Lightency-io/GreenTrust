@@ -369,8 +369,8 @@ const fetchCertificates = async (): Promise<Certificate[]> => {
         console.log("Collection already exists:", "GreenTrust Guarantee of Origins Specific to "+certificate.RazonSocial);
       } else {
         // Create a new collection if it doesn't exist
-        // const collectionHash = await createCollection(certificate);
-        // console.log("Collection created:", collectionHash);
+        const collectionHash = await createCollection(certificate);
+        console.log("Collection created:", collectionHash);
       }
 
         const tokens = await aptos.getAccountOwnedTokens({accountAddress:accountAdmin.accountAddress});

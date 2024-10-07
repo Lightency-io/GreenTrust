@@ -20,8 +20,8 @@ const saveContracts = async (data, userEmail) => {
     // Format `FechaInicio` and `FechaFin` from timestamp to Date objects
     const formattedContracts = contractsArray.map(contract => ({
       ...contract,
-      FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])), // Convert from timestamp to Date
-      FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])), // Convert from timestamp to Date
+      FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])).toISOString(), // Convert from timestamp to Date
+      FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])).toISOString(), // Convert from timestamp to Date
       demanderOrganization: "Nexus",
       demanderEmail: userEmail,
       transferredToDemander: false
@@ -45,6 +45,32 @@ const saveContracts = async (data, userEmail) => {
   } catch (error) {
     console.error('Error saving contracts to MongoDB:', error);
     throw error
+  }
+};
+
+
+const updateCertificate = async (certificateId, updatedFields) => {
+  try {
+    const GreenTrustModel = getGreenTrustModel();
+
+    // Add the status update to the updated fields
+    updatedFields.status = 'in_progress';
+    updatedFields.transferredToDemander = false;
+
+    const result = await GreenTrustModel.findOneAndUpdate(
+      { id: certificateId }, // Find certificate by ID
+      { $set: updatedFields }, // Update provided fields and status
+      { new: true } // Return the updated document
+    );
+
+    if (!result) {
+      throw new Error(`Certificate with ID ${certificateId} not found.`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error updating certificate:', error);
+    throw new Error(error.message || 'Internal Server Error');
   }
 };
 
@@ -135,6 +161,45 @@ const Data = GreenTrustModel
 
     if (!certificates.length) {
       throw new Error(`No certificates found with status ${status}`);
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+const fetchCertificatesForDemanderWithStatus = async (demander, status) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is as the parameter
+    const certificates = await Data.find({ demanderEmail: demander, status: status });
+
+    if (!certificates.length) {
+      throw new Error(`No certificates found with status ${status} for demander ${demander}`);
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
+
+
+const fetchCertificatesForDemanderCompanyWithStatus = async (demander, status, razonSocial) => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is as the parameter
+    const certificates = await Data.find({ demanderEmail: demander, status: status, razonSocial: razonSocial });
+
+    if (!certificates.length) {
+      throw new Error(`No certificates found with status ${status} for demander ${demander} for company ${razonSocial}`);
     }
     console.log(certificates)
     // Return the list of certificates
@@ -276,4 +341,4 @@ const Data = GreenTrustModel
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred};
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred, fetchCertificatesForDemanderWithStatus, fetchCertificatesForDemanderCompanyWithStatus, updateCertificate};

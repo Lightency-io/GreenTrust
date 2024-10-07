@@ -20,6 +20,10 @@ import Auditor from './pages/auditor/Auditor';
 import CertificateDetails from './pages/auditor/CertificateDetails';
 import CompanyCertificates from './pages/auditor/CompanyCertificates';
 import AuditorSelect from './pages/auditor';
+import DemanderDashboard from './pages/demander';
+import Demander from './pages/demander/Demander';
+import DemanderCompanyCertificates from './pages/demander/DemanderCompanyCertificates';
+import DemanderCertificateDetails from './pages/demander/DemanderCertificateDetails';
 
 const wallets = [new PetraWallet(), new MartianWallet];
 
@@ -66,6 +70,23 @@ const router = createBrowserRouter([
     path: "/auditor/:status/:razonSocial/certificate/:id",
     element: <CertificateDetails />,
   },
+  {
+    path: "/demander",
+    element: <DemanderDashboard />,
+  },
+  {
+    path: "/demander/:demanderEmail/:status",
+    element: <Demander />,
+  },
+  {
+    path: "/demander/:demanderEmail/:status/:razonSocial",
+    element: <DemanderCompanyCertificates />,
+  },
+  {
+    path: "/demander/:demanderEmail/:status/:razonSocial/certificate/:id",
+    element: <DemanderCertificateDetails />,
+  },
+  
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

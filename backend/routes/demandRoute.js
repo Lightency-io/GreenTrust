@@ -60,11 +60,52 @@ router.get('/certificatesForCompanyWithStatus/:razonSocial/:status', async (req,
 });
 
 
+router.get('/certificatesForDemanderWithStatus/:demanderEmail/:status', async (req, res) => {
+  const {demanderEmail, status} = req.params;
+  console.log(demanderEmail)
+  try {
+    const certificates = await saveContracts.fetchCertificatesForDemanderWithStatus(demanderEmail, status);
+    console.log("hii",certificates)
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+router.get('/certificatesForDemanderCompanyWithStatus/:demanderEmail/:status/:razonSocial', async (req, res) => {
+  const {demanderEmail, status, razonSocial} = req.params;
+  try {
+    const certificates = await saveContracts.fetchCertificatesForDemanderWithStatus(demanderEmail, status, razonSocial);
+    // console.log("hii",certificates)
+    res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/certificateWithId/:id', async (req, res) => {
   const {id} = req.params;
   try {
     const certificates = await saveContracts.fetchCertificatewithId(id);
     res.json(certificates);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+// Route to update certificate fields and set status to 'in_progress'
+router.put('/certificate/update/:id', async (req, res) => {
+  const { id } = req.params;
+  const updatedFields = req.body;
+
+  try {
+    const updatedCertificate = await saveContracts.updateCertificate(id, updatedFields);
+    res.status(200).json({
+      message: 'Certificate updated successfully.',
+      data: updatedCertificate,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
