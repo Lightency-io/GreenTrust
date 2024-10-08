@@ -97,7 +97,7 @@ const DemanderCertificateDetails = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updatedCertificate, setUpdatedCertificate] = useState<Certificate | null>(null);
 
-
+  const token = localStorage.getItem('authToken')
 
 
   // Function to update modified fields of the certificate on-chain
@@ -195,17 +195,21 @@ const updateCertificateOnChain = async (
         const response = await fetch(`http://localhost:3000/demand/certificateWithId/${id}`, {
           method: 'GET',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
 
         if (!response.ok) {
+            
           throw new Error('Failed to fetch certificate');
+          
         }
 
+
         const data = await response.json();
-        setCertificate(data[0]);
-        setUpdatedCertificate(data[0]);
+        setCertificate(data);
+        setUpdatedCertificate(data);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -214,7 +218,7 @@ const updateCertificateOnChain = async (
     };
 
     fetchCertificate();
-  }, [id]);
+  }, [id, certificate?.status]);
 
   const handleDialogOpen = () => {
     setDialogOpen(true);
@@ -258,6 +262,7 @@ const updateCertificateOnChain = async (
         const response = await fetch(`http://localhost:3000/demand/certificate/update/${id}`, {
           method: 'PUT',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(formattedCertificate),
@@ -274,7 +279,7 @@ const updateCertificateOnChain = async (
         handleDialogClose();
 
         // Redirect to in-progress page after successful update
-        navigate(`/demander/${demanderEmail}/in_progress/${razonSocial}/certificate/${id}`);
+        navigate(`/demander/in_progress/${razonSocial}/certificate/${id}`);
       }
     } catch (err: any) {
       setError(err.message);

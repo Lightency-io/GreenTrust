@@ -1,5 +1,6 @@
 const express = require('express')
 const saveContracts = require('../controller/demandController.js');
+const { verifyToken } = require('../middleware/authUtils');
 
 
 
@@ -35,81 +36,24 @@ router.get('/certificatesInProgress', async (req, res) => {
     }
   });
 
-    // Route to fetch all certificates with status
-router.get('/certificatesWithStatus/:status', async (req, res) => {
-  const {status} = req.params;
-  console.log(status)
-  try {
-    const certificates = await saveContracts.fetchCertificateswithStatus(status);
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+// Route to fetch all certificates with status
+router.get('/certificatesWithStatus/:status', verifyToken, saveContracts.fetchCertificateswithStatus);
 
 
-router.get('/certificatesForCompanyWithStatus/:razonSocial/:status', async (req, res) => {
-  const {razonSocial, status} = req.params;
-  console.log(razonSocial)
-  try {
-    const certificates = await saveContracts.fetchCertificatesCompanywithStatus(razonSocial, status);
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.get('/certificatesForCompanyWithStatus/:razonSocial/:status', verifyToken, saveContracts.fetchCertificatesCompanywithStatus);
 
 
-router.get('/certificatesForDemanderWithStatus/:demanderEmail/:status', async (req, res) => {
-  const {demanderEmail, status} = req.params;
-  console.log(demanderEmail)
-  try {
-    const certificates = await saveContracts.fetchCertificatesForDemanderWithStatus(demanderEmail, status);
-    console.log("hii",certificates)
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 
-router.get('/certificatesForDemanderCompanyWithStatus/:demanderEmail/:status/:razonSocial', async (req, res) => {
-  const {demanderEmail, status, razonSocial} = req.params;
-  try {
-    const certificates = await saveContracts.fetchCertificatesForDemanderWithStatus(demanderEmail, status, razonSocial);
-    // console.log("hii",certificates)
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.get('/certificateWithId/:id', verifyToken, saveContracts.fetchCertificatewithId);
 
-router.get('/certificateWithId/:id', async (req, res) => {
-  const {id} = req.params;
-  try {
-    const certificates = await saveContracts.fetchCertificatewithId(id);
-    res.json(certificates);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 
 // Route to update certificate fields and set status to 'in_progress'
-router.put('/certificate/update/:id', async (req, res) => {
-  const { id } = req.params;
-  const updatedFields = req.body;
+router.put('/certificate/update/:id', verifyToken, saveContracts.updateCertificate);
 
-  try {
-    const updatedCertificate = await saveContracts.updateCertificate(id, updatedFields);
-    res.status(200).json({
-      message: 'Certificate updated successfully.',
-      data: updatedCertificate,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+
+
 
   // API route to update the certificate status in the database
 router.put('/updateCertificateStatus/:razonSocial/:id', async (req, res) => {

@@ -2,6 +2,7 @@
 const utils = require('../middleware/utils.js');
 const { getGreenTrustModel, getEMSDataModel } = require('../db.js');
 const sqlite3 = require('sqlite3').verbose();
+const {checkUserAuthorization} = require('../middleware/authUtils.js')
 
 
 
@@ -10,69 +11,76 @@ const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(':memory:');
 // const Data = GreenTrustModel
 let files = {}
-const saveContracts = async (data, userEmail) => {
+const saveContracts = async (contractsArray, userEmail) => {
   const GreenTrustModel = getGreenTrustModel();
   const Data = GreenTrustModel;
-  
-  try {
-    const contractsArray = data; // Get the array of contracts from the request body
 
+  try {
     // Format `FechaInicio` and `FechaFin` from timestamp to Date objects
     const formattedContracts = contractsArray.map(contract => ({
       ...contract,
-      FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])).toISOString(), // Convert from timestamp to Date
-      FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])).toISOString(), // Convert from timestamp to Date
+      FechaInicio: new Date(parseInt(contract.FechaInicio.split('.')[0])).toISOString(),
+      FechaFin: new Date(parseInt(contract.FechaFin.split('.')[0])).toISOString(),
       demanderOrganization: "Nexus",
       demanderEmail: userEmail,
       transferredToDemander: false
     }));
 
-    // Iterate over each formatted contract and check if it exists in the database
     const savedContracts = [];
     for (const contract of formattedContracts) {
       const existingContract = await Data.findOne({ id: contract.id });
 
       if (!existingContract) {
-        // If the contract does not exist, insert it
         const savedContract = await Data.create(contract);
         savedContracts.push(savedContract);
       } else {
-        throw new Error(`Demand with ID ${contract.id} already exists. Skipping...`);
+        console.log(`Demand with ID ${contract.id} already exists. Skipping...`);
       }
     }
 
     return savedContracts;
   } catch (error) {
-    console.error('Error saving contracts to MongoDB:', error);
-    throw error
+    console.error('Error saving contracts:', error);
+    throw new Error('Error saving contracts');
   }
 };
 
 
-const updateCertificate = async (certificateId, updatedFields) => {
-  try {
-    const GreenTrustModel = getGreenTrustModel();
 
-    // Add the status update to the updated fields
+
+const updateCertificate = async (req, res) => {
+  const { id } = req.params;
+  const updatedFields = req.body;
+  const GreenTrustModel = getGreenTrustModel();
+
+  try {
+    const certificate = await GreenTrustModel.findOne({ id: id });
+
+    if (!certificate) {
+      return res.status(404).json({ message: `Certificate with ID ${id} not found.` });
+    }
+
+    // Ensure only authorized users (Issuer or Auditor) can update
+    if (!checkUserAuthorization(req.user, certificate)) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
     updatedFields.status = 'in_progress';
     updatedFields.transferredToDemander = false;
 
     const result = await GreenTrustModel.findOneAndUpdate(
-      { id: certificateId }, // Find certificate by ID
-      { $set: updatedFields }, // Update provided fields and status
-      { new: true } // Return the updated document
+      { id: id },
+      { $set: updatedFields },
+      { new: true }
     );
 
-    if (!result) {
-      throw new Error(`Certificate with ID ${certificateId} not found.`);
-    }
-
-    return result;
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error updating certificate:', error);
-    throw new Error(error.message || 'Internal Server Error');
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 async function getDataRow(req, res, next) {
     const { keys, uuid } = req.body
@@ -128,124 +136,87 @@ const updateTokenOnChainId = async (razonSocial, id, tokenOnChainId) => {
 };
 
 
-// Function to fetch all certificates with status "in_progress"
-const fetchCertificatesInProgress = async () => {
-  const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
-  try {
-    // Find all documents where the status is "in_progress"
-    const certificates = await Data.find({ status: 'in_progress' });
 
-    if (!certificates.length) {
-      console.log("no certificates found");
-      //throw new Error('No certificates found with status "in_progress"');
-      
-    }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
-  } catch (error) {
-    throw new Error(error.message || 'Server error');
-  }
-};
 
-// Function to fetch all certificates with status
-const fetchCertificateswithStatus = async (status) => {
+const fetchCertificateswithStatus = async (req, res) => {
+  const { status } = req.params;
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  const Data = GreenTrustModel;
+
   try {
-    // Find all documents where the status is as the parameter
     const certificates = await Data.find({ status: status });
-
     if (!certificates.length) {
-      throw new Error(`No certificates found with status ${status}`);
+      return res.status(202).json(certificates);
     }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
+    // Filter certificates that the user is authorized to view
+    const authorizedCertificates = certificates.filter(cert =>
+      checkUserAuthorization(req.user, cert)
+    );
+    
+
+    res.status(200).json(authorizedCertificates);
   } catch (error) {
-    throw new Error(error.message || 'Server error');
+    res.status(500).json({ message: 'Error fetching certificates' });
   }
 };
 
-const fetchCertificatesForDemanderWithStatus = async (demander, status) => {
+const fetchCertificatesCompanywithStatus = async (req, res) => {
+  const { razonSocial, status } = req.params;
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  const Data = GreenTrustModel;
+
   try {
-    // Find all documents where the status is as the parameter
-    const certificates = await Data.find({ demanderEmail: demander, status: status });
-
-    if (!certificates.length) {
-      throw new Error(`No certificates found with status ${status} for demander ${demander}`);
-    }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
-  } catch (error) {
-    throw new Error(error.message || 'Server error');
-  }
-};
-
-
-const fetchCertificatesForDemanderCompanyWithStatus = async (demander, status, razonSocial) => {
-  const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
-  try {
-    // Find all documents where the status is as the parameter
-    const certificates = await Data.find({ demanderEmail: demander, status: status, razonSocial: razonSocial });
-
-    if (!certificates.length) {
-      throw new Error(`No certificates found with status ${status} for demander ${demander} for company ${razonSocial}`);
-    }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
-  } catch (error) {
-    throw new Error(error.message || 'Server error');
-  }
-};
-
-// Function to fetch all certificates for company with status
-const fetchCertificatesCompanywithStatus = async (razonSocial, status) => {
-  const GreenTrustModel = getGreenTrustModel();
-const Data = GreenTrustModel
-  try {
+    // Fetch certificates based on the company name (RazonSocial) and status
     const certificates = await Data.find({ RazonSocial: razonSocial, status: status });
 
     if (!certificates.length) {
-      throw new Error(`No certificates found with status ${status}`);
+      return res.status(202).json(certificates);
     }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
+
+    // Filter certificates to only show those the user is authorized to access
+    const authorizedCertificates = certificates.filter(cert =>
+      checkUserAuthorization(req.user, cert) // Check if the user is authorized to view the certificate
+    );
+
+    if (authorizedCertificates.length === 0) {
+      return res.status(403).json({ message: 'You are not authorized to view these certificates' });
+    }
+
+    res.status(200).json(authorizedCertificates);
   } catch (error) {
-    throw new Error(error.message || 'Server error');
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
 
-// Function to fetch all certificates with status
-const fetchCertificatewithId = async (id) => {
+
+const fetchCertificatewithId = async (req, res) => {
+  const { id } = req.params;
   const GreenTrustModel = getGreenTrustModel();
-const Data = GreenTrustModel
+  const Data = GreenTrustModel;
+
   try {
-    // Find all documents where the status is as the parameter
+    // Fetch the certificate based on the provided ID
     const certificates = await Data.find({ id: id });
 
     if (!certificates.length) {
-      throw new Error(`No certificates found with status ${id}`);
+      return res.status(202).json(certificates);
     }
-    console.log(certificates)
-    // Return the list of certificates
-    return certificates;
+
+    const certificate = certificates[0];
+
+    // Check if the user is authorized to view the certificate
+    const isAuthorized = checkUserAuthorization(req.user, certificate);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'You are not authorized to view this certificate' });
+    }
+
+    res.status(200).json(certificate);
   } catch (error) {
-    throw new Error(error.message || 'Server error');
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
+
 
 // Function to verify if the certificate exists in the EMSDataModel
 async function verifyCertificate(req, res) {
@@ -294,6 +265,29 @@ async function verifyCertificate(req, res) {
 }
 
 
+///// ******* Admin Functions *******
+
+// Function to fetch all certificates with status "in_progress"
+const fetchCertificatesInProgress = async () => {
+  const GreenTrustModel = getGreenTrustModel();
+console.log(GreenTrustModel)
+const Data = GreenTrustModel
+  try {
+    // Find all documents where the status is "in_progress"
+    const certificates = await Data.find({ status: 'in_progress' });
+
+    if (!certificates.length) {
+      console.log("no certificates found");
+      return [];
+      
+    }
+    console.log(certificates)
+    // Return the list of certificates
+    return certificates;
+  } catch (error) {
+    throw new Error(error.message || 'Server error');
+  }
+};
 
 // Function to update the status of a certificate in the database
 const updateCertificateStatusInDB = async (razonSocial, id, status) => {
@@ -341,4 +335,4 @@ const Data = GreenTrustModel
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred, fetchCertificatesForDemanderWithStatus, fetchCertificatesForDemanderCompanyWithStatus, updateCertificate};
+module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred, updateCertificate};

@@ -53,7 +53,7 @@ function UploadPage() {
   const [searchedColumn, setSearchedColumn] = useState('');
   const [range, setRange] = useState<Array<dayjs.Dayjs> | null>(null);
 
-
+  const token = localStorage.getItem('authToken')
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
 
@@ -204,13 +204,15 @@ function UploadPage() {
     setLoading(true);
     
   const user = getCurrentUser();
-
+  console.log(user)
+  
     try {
       // Post data to the database first
       const response = await fetch('http://localhost:3000/download', {
         body: JSON.stringify({ keys: selectedRowKeys, rows: selectedRows, uuid: uuid, userEmail: user?.user.email }),
         method: "POST",
         headers: {
+          'Authorization': `Bearer ${token}`,
           "content-type": "application/json"
         }
       });
@@ -580,6 +582,7 @@ const fetchCertificates = async (): Promise<Certificate[]> => {
             body: JSON.stringify({ keys: [record.id], rows: [record.CIF], uuid: uuid }),
             method: "POST",
             headers: {
+              'Authorization': `Bearer ${token}`,
               "content-type": "application/json"
             }
           }).then(message.success("Demande created successfully", 2));

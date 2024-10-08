@@ -23,6 +23,7 @@ const Auditor = () => {
   const navigate = useNavigate();
   const { status } = useParams<{ status: string }>();
 
+  const token = localStorage.getItem('authToken')
   // Fetch certificates with status from backend
   useEffect(() => {
     const fetchCertificates = async (status: string) => {
@@ -30,6 +31,7 @@ const Auditor = () => {
         const response = await fetch(`http://localhost:3000/demand/certificatesWithStatus/${status}`, {
           method: 'GET',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -77,9 +79,11 @@ const Auditor = () => {
           <CircularProgress />
         </Box>
       )}
-      {error && <Alert severity="error">{error}</Alert>}
+      {!loading && !error && certificates.length === 0 && (
+        <Alert severity="info">No certificates available with {status} status.</Alert>
+      )}
 
-      {!loading && !error && (
+      {!loading && !error && certificates.length > 0 && (
         <Grid2 container spacing={3}>
           {uniqueCompanies.map((razonSocial, index) => (
             <Grid2 key={index} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>

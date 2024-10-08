@@ -4,11 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import BlockIcon from '@mui/icons-material/Block';
+import VerticalNavbar from '../../components/navbar'
 
 const AuditorSelect = () => {
   const navigate = useNavigate();
 
   return (
+    <div style={{ display: 'flex' }}>
+    
     <Container maxWidth="lg">
       <Box sx={{ textAlign: 'center', mt: 6, mb: 6 }}>
         <Typography
@@ -103,6 +106,7 @@ const AuditorSelect = () => {
         </Grid2>
       </Grid2>
     </Container>
+    </div>
   );
 };
 

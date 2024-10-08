@@ -3,7 +3,6 @@ import { Card, CardContent, Typography, CircularProgress, Container, Grid2, Aler
 import VerifiedIcon from '@mui/icons-material/Verified';
 import { useNavigate, useParams } from 'react-router-dom';
 
-
 // Define an interface for Certificate
 interface Certificate {
   id: number;
@@ -17,24 +16,21 @@ interface Certificate {
   tokenOnChainId: string;
 }
 
-
-
 const Demander = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { demanderEmail, status } = useParams<{ demanderEmail: string, status: string }>();
-
-
-
+  const { status } = useParams<{ demanderEmail: string, status: string }>();
+  const token = localStorage.getItem('authToken')
   // Fetch certificates with status from backend
   useEffect(() => {
-    const fetchCertificates = async (demanderEmail:string, status: string) => {
+    const fetchCertificates = async (status: string) => {
       try {
-        const response = await fetch(`http://localhost:3000/demand/certificatesForDemanderWithStatus/${demanderEmail}/${status}`, {
+        const response = await fetch(`http://localhost:3000/demand/certificatesWithStatus/${status}`, {
           method: 'GET',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -52,13 +48,14 @@ const Demander = () => {
       }
     };
 
-    if (status && demanderEmail) {
-      fetchCertificates(demanderEmail, status);
+    if (status) {
+      fetchCertificates(status);
     }
-  }, [demanderEmail, status]);
+  }, [status]);
 
   // Extract unique companies (RazonSocial)
   const uniqueCompanies = Array.from(new Set(certificates.map((cert) => cert.RazonSocial)));
+  
 
   return (
     <Container maxWidth="lg">
@@ -83,14 +80,18 @@ const Demander = () => {
         </Box>
       )}
       {error && <Alert severity="error">{error}</Alert>}
+      
+      {!loading && !error && certificates.length === 0 && (
+        <Alert severity="info">No certificates available with {status} status.</Alert>
+      )}
 
-      {!loading && !error && (
+      {!loading && !error && certificates.length > 0 && (
         <Grid2 container spacing={3}>
           {uniqueCompanies.map((razonSocial, index) => (
             <Grid2 key={index} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
               <Card
                 variant="outlined"
-                onClick={() => navigate(`/demander/${demanderEmail}/${status}/${encodeURIComponent(razonSocial)}`)}
+                onClick={() => navigate(`/demander/${status}/${encodeURIComponent(razonSocial)}`)}
                 sx={{
                   cursor: 'pointer',
                   minHeight: '375px',

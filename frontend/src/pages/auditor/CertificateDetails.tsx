@@ -82,7 +82,7 @@ const CertificateDetails = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('issued');
-
+  const token = localStorage.getItem('authToken')
  
 
   const getCurrentUser = () => {
@@ -192,6 +192,7 @@ const handleUpdateCertificate = async (certificate: Certificate, newStatus: stri
         const response = await fetch(`http://localhost:3000/demand/certificateWithId/${id}`, {
           method: 'GET',
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -201,7 +202,7 @@ const handleUpdateCertificate = async (certificate: Certificate, newStatus: stri
         }
 
         const data = await response.json();
-        setCertificate(data[0]);
+        setCertificate(data);
       } catch (err: any) {
         setError(err.message);
       } finally {

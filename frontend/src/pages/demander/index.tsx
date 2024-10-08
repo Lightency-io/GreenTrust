@@ -77,7 +77,7 @@ const DemanderDashboard = () => {
       <Grid2 size={{ xs: 12, md: 3 }}>
           <Card
             variant="outlined"
-            onClick={() => navigate(`/demander/${demanderEmail}/in_progress`)}
+            onClick={() => navigate(`/demander/in_progress`)}
             sx={{
               cursor: 'pointer',
               height: '100%',
@@ -102,7 +102,7 @@ const DemanderDashboard = () => {
         <Grid2 size={{ xs: 12, md: 3 }}>
           <Card
             variant="outlined"
-            onClick={() => navigate(`/demander/${demanderEmail}/issued`)}
+            onClick={() => navigate(`/demander/issued`)}
             sx={{
               cursor: 'pointer',
               height: '100%',
@@ -128,7 +128,7 @@ const DemanderDashboard = () => {
         <Grid2 size={{ xs: 12, md: 3 }}>
           <Card
             variant="outlined"
-            onClick={() => navigate(`/demander/${demanderEmail}/audited`)}
+            onClick={() => navigate(`/demander/audited`)}
             sx={{
               cursor: 'pointer',
               height: '100%',
@@ -154,7 +154,7 @@ const DemanderDashboard = () => {
         <Grid2 size={{ xs: 12, md: 3 }}>
           <Card
             variant="outlined"
-            onClick={() => navigate(`/demander/${demanderEmail}/rejected`)}
+            onClick={() => navigate(`/demander/rejected`)}
             sx={{
               cursor: 'pointer',
               height: '100%',
