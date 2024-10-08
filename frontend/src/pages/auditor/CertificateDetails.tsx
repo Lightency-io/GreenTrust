@@ -103,8 +103,8 @@ const CertificateDetails = () => {
     const transaction = await aptos.transaction.build.simple({
       sender: accountAdmin.accountAddress,
       data: {
-        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::update_property",
-        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::update_property`,
+        typeArguments:[`${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`],
         functionArguments: [
             tokenAddress,
             "status",

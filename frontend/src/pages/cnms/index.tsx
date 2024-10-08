@@ -89,7 +89,7 @@ console.log(walletAccount)
     const transaction = await aptos.transaction.build.simple({
       sender: accountAdmin.accountAddress,
       data: {
-        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::create_collection",
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::create_collection`,
         functionArguments: [
           "This is a collection for the Guarantee of Origin Certificates on GreenTrust",
           "GreenTrust Guarantee of Origins Specific to "+certificate.RazonSocial,
@@ -138,7 +138,7 @@ console.log(walletAccount)
     const transaction = await aptos.transaction.build.simple({
       sender: accountAdmin.accountAddress,
       data: {
-        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::mint",
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::mint`,
         functionArguments: [
           "GreenTrust Guarantee of Origins Specific to "+certificate.RazonSocial, // Collection name must match what was created earlier
           "This is a Guarantee of Origin Certificate offered to "+certificate.RazonSocial+' for the amount of '+certificate.Potencia, // Description for the token (can be certificate's RazonSocial)
@@ -223,8 +223,8 @@ console.log(walletAccount)
     const transaction = await aptos.transaction.build.simple({
       sender: accountAdmin.accountAddress,
       data: {
-        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::update_property",
-        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::update_property`,
+        typeArguments:[`${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`],
         functionArguments: [
             tokenAddress,
             "status",
@@ -252,8 +252,8 @@ console.log(walletAccount)
     const transaction = await aptos.transaction.build.simple({
       sender: accountAdmin.accountAddress,
       data: {
-        function: "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::burn",
-        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::burn`,
+        typeArguments:[`${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`],
         functionArguments: [
             tokenAddress
         ],
@@ -498,7 +498,7 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
     sender: walletAccount?.address,
     data: {
         function: "0x1::object::transfer",
-        typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+        typeArguments:[`${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`],
         functionArguments: [
             digitalAssetAddress,
             recipient

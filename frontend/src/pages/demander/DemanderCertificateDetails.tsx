@@ -125,9 +125,9 @@ const updateCertificateOnChain = async (
           // Create a payload for each modified field
           const payload: InputGenerateTransactionPayloadData = {
             function:
-              "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::update_property",
+              `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::update_property`,
             typeArguments: [
-              "0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken",
+              `${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`,
             ],
             functionArguments: [
               updatedCertificate.tokenOnChainId,
@@ -164,10 +164,10 @@ const updateCertificateOnChain = async (
           sender: walletAccount?.address,
           data: {
               function: "0x1::object::transfer",
-              typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
+              typeArguments:[`${import.meta.env.VITE_CONTRACT_ADDRESS!}::guarantee_of_origin::GOToken`],
               functionArguments: [
                   originalCertificate.tokenOnChainId,
-                  "0x8729b0d9ddb6b6ce5e84f6d525c4b8d1344178a2b79811af8d9f48441bcb53e0"
+                  import.meta.env.VITE_ACCOUNT_ADDRESS!
               ],
           },
         });
