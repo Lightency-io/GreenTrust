@@ -26,6 +26,7 @@ import Layout from './components/Layout';  // The layout component
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
+import ProfilePage from './pages/profile';
 
 const wallets = [new PetraWallet(), new MartianWallet];
 const queryClient = new QueryClient();
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
   {
     path: "/connect-cnms",
     element: <CNMSPage />,
+  },
+  {
+    path: "/profile",
+    element: <ProfilePage />,
   },
   // Auditor routes with persistent navbar
   {

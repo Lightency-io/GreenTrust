@@ -127,7 +127,7 @@ const AuthPage = () => {
         organization: formData.organization || undefined, // Only include if exists
         walletAddress: walletAccount.address
       };
-console.log(body)
+//console.log(body)
     try {
       const response = await fetch(apiEndpoint, {
         method: "POST",
