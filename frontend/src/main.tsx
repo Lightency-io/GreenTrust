@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { App as AntdApp } from "antd";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-
 import './main.css';
 
-// Pages and Components
+  // Import AuthProvider
+
 import HomePage from './pages/home';
 import AuthPage from './pages/auth';
 import IssuerDashboard from './pages/issuerDashboard';
@@ -21,40 +21,22 @@ import DemanderDashboard from './pages/demander';
 import Demander from './pages/demander/Demander';
 import DemanderCompanyCertificates from './pages/demander/DemanderCompanyCertificates';
 import DemanderCertificateDetails from './pages/demander/DemanderCertificateDetails';
-import Layout from './components/Layout';  // The layout component
+import Layout from './components/Layout'; // Import ProtectedRoute
 
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import ProfilePage from './pages/profile';
+import ProtectedRoute from './Auth/ProtectedRoute';
+import { AuthProvider } from './Auth/AuthProvider';
 
 const wallets = [new PetraWallet(), new MartianWallet];
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <HomePage />,
-  },
-  {
     path: "/auth",
     element: <AuthPage />,
-  },
-  {
-    path: "/Dashboard",
-    element: <IssuerDashboard />,
-  },
-  {
-    path: "/upload",
-    element: <UploadPage />,
-  },
-  {
-    path: "/files/:uuid",
-    element: <FilePage />,
-  },
-  {
-    path: "/connect-cnms",
-    element: <CNMSPage />,
   },
   {
     path: "/profile",
@@ -63,7 +45,11 @@ const router = createBrowserRouter([
   // Auditor routes with persistent navbar
   {
     path: "/auditor",
-    element: <Layout role="auditor" />, // Use Layout for auditor
+    element: (
+      <ProtectedRoute allowedRoles={['auditor']}>
+        <Layout role="auditor" />
+      </ProtectedRoute>
+    ),
     children: [
       { path: "", element: <AuditorSelect /> },
       { path: ":status", element: <Auditor /> },
@@ -74,7 +60,11 @@ const router = createBrowserRouter([
   // Demander routes with persistent navbar
   {
     path: "/demander",
-    element: <Layout role="demander" />, // Use Layout for demander
+    element: (
+      <ProtectedRoute allowedRoles={['demander']}>
+        <Layout role="demander" />
+      </ProtectedRoute>
+    ),
     children: [
       { path: "", element: <DemanderDashboard /> },
       { path: ":status", element: <Demander /> },
@@ -82,15 +72,28 @@ const router = createBrowserRouter([
       { path: ":status/:razonSocial/certificate/:id", element: <DemanderCertificateDetails /> },
     ],
   },
+  // Protect issuer dashboard
+  {
+    path: "/Dashboard",
+    element: (
+      <ProtectedRoute allowedRoles={['issuer']}>
+        <IssuerDashboard />
+      </ProtectedRoute>
+    ),
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
-        <AntdApp>
-          <RouterProvider router={router} />
-        </AntdApp>
+         {/* Wrap everything inside AuthProvider */}
+          <AntdApp>
+          <AuthProvider>
+            <RouterProvider router={router} />
+            </AuthProvider>
+          </AntdApp>
+        
       </AptosWalletAdapterProvider>
     </QueryClientProvider>
   </React.StrictMode>

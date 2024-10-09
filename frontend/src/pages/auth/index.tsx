@@ -1,32 +1,18 @@
 import React, { useState } from 'react';
-import "./HomePage.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Alert, Button } from "@mui/material";
-
+import { Alert, Button, Box, TextField, Typography, MenuItem, CircularProgress } from '@mui/material';
+import { useAuth } from '../../Auth/AuthProvider';
+import "./index.css"
 
 const AuthPage = () => {
-
-  const {
-    connect,
-    account,
-    network,
-    connected,
-    disconnect,
-    wallet,
-    wallets,
-    signAndSubmitTransaction,
-    signTransaction,
-    signMessage,
-    signMessageAndVerify,
-  } = useWallet();
+  const { connect, account, connected } = useWallet();
   const walletAccount = account;
-  console.log(walletAccount)
-
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true); // Toggle between login and sign up
+  const { login } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -35,15 +21,14 @@ const AuthPage = () => {
     companyName: '',
     licence: '',
   });
-  const [errorMessage, setErrorMessage] = useState(''); // To show any errors
+  const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Toggle between Login and Sign Up
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
     setFormData({
@@ -56,82 +41,93 @@ const AuthPage = () => {
     });
   };
 
-  // Render organization or company fields based on the role
   const renderRoleSpecificFields = () => {
     if (formData.role === 'demander') {
       return (
-        <div>
-          <label>Organization</label>
-          <select name="organization" value={formData.organization} onChange={handleInputChange} required>
-            <option value="">Select Organization</option>
-            <option value="Nexus">Nexus</option>
-            <option value="Steg">Steg</option>
-            <option value="ENIT">ENIT</option>
-          </select>
-        </div>
+        <TextField
+          select
+          name="organization"
+          label="Organization"
+          value={formData.organization}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+          required
+        >
+          <MenuItem value="Nexus">Nexus</MenuItem>
+          <MenuItem value="Steg">Steg</MenuItem>
+          <MenuItem value="ENIT">ENIT</MenuItem>
+        </TextField>
       );
     } else if (formData.role === 'issuer') {
       return (
-        <div>
-          <label>Organization</label>
-          <select name="organization" value={formData.organization} onChange={handleInputChange} required>
-            <option value="">Select Organization</option>
-            <option value="CNMC">CNMC</option>
-            <option value="element2">Element 2</option>
-            <option value="element3">Element 3</option>
-          </select>
-        </div>
+        <TextField
+          select
+          name="organization"
+          label="Organization"
+          value={formData.organization}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+          required
+        >
+          <MenuItem value="CNMC">CNMC</MenuItem>
+          <MenuItem value="element2">Element 2</MenuItem>
+          <MenuItem value="element3">Element 3</MenuItem>
+        </TextField>
       );
     } else if (formData.role === 'auditor') {
       return (
-        <div>
-          <label>Company Name</label>
-          <input
-            type="text"
+        <>
+          <TextField
             name="companyName"
+            label="Company Name"
             value={formData.companyName}
             onChange={handleInputChange}
+            fullWidth
+            margin="normal"
             required
           />
-          <label>Licence</label>
-          <input
-            type="text"
+          <TextField
             name="licence"
+            label="Licence"
             value={formData.licence}
             onChange={handleInputChange}
+            fullWidth
+            margin="normal"
             required
           />
-        </div>
+        </>
       );
     }
     return null;
   };
 
-  // Submit handler for sign-up or login
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("test")
+    setLoading(true);
     if (!walletAccount) {
       setErrorMessage('Please connect your wallet to continue.');
+      setLoading(false);
       return;
     }
+
     const apiEndpoint = isLogin ? "http://localhost:3000/auth/signIn" : "http://localhost:3000/auth/signUp";
     const body = isLogin
-      ? { email: formData.email, password: formData.password, walletAddress: walletAccount.address } // Sign-in body
-      : { // Sign-up body
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        companyName: formData.companyName || undefined, // Only include if exists
-        licence: formData.licence || undefined, // Only include if exists
-        organization: formData.organization || undefined, // Only include if exists
-        walletAddress: walletAccount.address
-      };
-//console.log(body)
+      ? { email: formData.email, password: formData.password, walletAddress: walletAccount.address }
+      : {
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          companyName: formData.companyName || undefined,
+          licence: formData.licence || undefined,
+          organization: formData.organization || undefined,
+          walletAddress: walletAccount.address,
+        };
+
     try {
       const response = await fetch(apiEndpoint, {
         method: "POST",
-        mode: "cors",
         headers: {
           "Content-Type": "application/json",
         },
@@ -139,89 +135,168 @@ const AuthPage = () => {
       });
 
       const data = await response.json();
-      console.log(data)
-
       if (!response.ok) {
         setErrorMessage(data.erreur || "Something went wrong.");
+        setLoading(false);
         return;
       }
 
-
-      localStorage.setItem('authToken', data.token)
-      // Check the role and navigate accordingly
-      const userRole = isLogin ? data.role : formData.role; // Assuming login response contains user data with role
-
-      if (userRole === 'auditor') {
+      login(data.token);
+      if (data.role === 'auditor') {
         navigate('/auditor');
-      } else if (userRole === 'issuer') {
+      } else if (data.role === 'issuer') {
         navigate('/Dashboard');
-      } else if (userRole === 'demander') {
+      } else if (data.role === 'demander') {
         navigate('/demander');
       } else {
         alert('Unknown role');
       }
       setErrorMessage('');
       alert(isLogin ? 'Login successful!' : 'Sign-up successful!');
-
     } catch (error) {
-      console.log('Error:', error);
       setErrorMessage('Failed to connect to the server. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
+    <Box
+      sx={{
+        maxWidth: 480,
+        mx: 'auto',
+        my: 5,
+        p: 4,
+        borderRadius: 2,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#fff',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-8px)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
+        },
+      }}
+    >
+      <Typography variant="h4" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold', color: '#2e7d32' }}>
+        {isLogin ? 'Login' : 'Sign Up'}
+      </Typography>
       {errorMessage && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {errorMessage}
         </Alert>
       )}
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div><WalletSelector /></div>
+        <TextField
+          name="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+          required
+          sx={{
+            '& .MuiInputLabel-root': { color: '#2e7d32' },
+            '& .MuiOutlinedInput-root': {
+              '&.Mui-focused fieldset': { borderColor: '#2e7d32' },
+            },
+          }}
+        />
+        <TextField
+          name="password"
+          label="Password"
+          type="password"
+          value={formData.password}
+          onChange={handleInputChange}
+          fullWidth
+          margin="normal"
+          required
+          sx={{
+            '& .MuiInputLabel-root': { color: '#2e7d32' },
+            '& .MuiOutlinedInput-root': {
+              '&.Mui-focused fieldset': { borderColor: '#2e7d32' },
+            },
+          }}
+        />
+        <Box display="flex" justifyContent="center"
+          sx={{
+            mt: 2,
+            mb: 3,
+            p: 2,
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            backgroundColor: '#f9f9f9',
+            '& .wallet-adapter-selector-button': {
+              backgroundColor: '#2e7d32',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#1b5e20',
+              },
+            },
+          }}
+        >
+          <WalletSelector  />
+        </Box>
 
         {!isLogin && (
-          <div>
-            <label>Role</label>
-            <select name="role" value={formData.role} onChange={handleInputChange} required>
-              <option value="">Select Role</option>
-              <option value="auditor">Auditor</option>
-              <option value="issuer">Issuer</option>
-              <option value="demander">Demander</option>
-            </select>
-
+          <>
+            <TextField
+              select
+              name="role"
+              label="Role"
+              value={formData.role}
+              onChange={handleInputChange}
+              fullWidth
+              margin="normal"
+              required
+              sx={{
+                '& .MuiInputLabel-root': { color: '#2e7d32' },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': { borderColor: '#2e7d32' },
+                },
+              }}
+            >
+              <MenuItem value="auditor">Auditor</MenuItem>
+              <MenuItem value="issuer">Issuer</MenuItem>
+              <MenuItem value="demander">Demander</MenuItem>
+            </TextField>
             {renderRoleSpecificFields()}
-          </div>
+          </>
         )}
 
-        <button type="submit">{isLogin ? 'Login' : 'Sign Up'}</button>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          sx={{
+            mt: 3,
+            py: 1.5,
+            fontSize: 16,
+            fontWeight: 'bold',
+            backgroundColor: '#2e7d32',
+            '&:hover': {
+              backgroundColor: '#1b5e20',
+            },
+          }}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} color="inherit" /> : isLogin ? 'Login' : 'Sign Up'}
+        </Button>
       </form>
-      <br />
-      <button onClick={toggleAuthMode}>
+      <Button
+        onClick={toggleAuthMode}
+        fullWidth
+        sx={{
+          mt: 3,
+          textTransform: 'none',
+          fontWeight: 'bold',
+          color: '#2e7d32',
+        }}
+      >
         {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 };
 

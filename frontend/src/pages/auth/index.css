@@ -1,0 +1,17 @@
+/* WalletSelector Custom Styling */
+.wallet-button {
+    background-color: #2e7d32 !important;
+    color: white !important;
+  }
+  
+.wallet-button:hover {
+    background-color: #1b5e20 !important;
+    border-color: #1b5e20;
+  }
+  
+.wallet-selector-modal {
+    background-color: #fafafa !important;
+  }
+  
+
+  
