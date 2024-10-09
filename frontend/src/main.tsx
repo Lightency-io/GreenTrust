@@ -39,6 +39,18 @@ const router = createBrowserRouter([
     element: <AuthPage />,
   },
   {
+    path: "/upload",
+    element: <UploadPage />,
+  },
+  {
+    path: "/files/:uuid",
+    element: <FilePage />,
+  },
+  {
+    path: "/connect-cnms",
+    element: <CNMSPage />,
+  },
+  {
     path: "/profile",
     element: <ProfilePage />,
   },

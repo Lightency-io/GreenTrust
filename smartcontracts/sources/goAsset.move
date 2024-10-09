@@ -45,7 +45,7 @@ module GreenTrust::guarantee_of_origin {
 
 
     /// Published under the contract owner's account.
-    struct Config has key {
+    struct Config has key, store {
         collection_names_list: SmartVector<String>,
         tokens_names_list: SmartVector<String>,
         extend_ref: object::ExtendRef,
