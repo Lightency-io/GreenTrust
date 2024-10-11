@@ -241,6 +241,9 @@ app.post("/download", verifyToken, async (req, res, next) => {
       `SELECT *, SUM(GarantiaSolicitada) as sum FROM ${file.table_id} WHERE id IN (${keys.toString()}) GROUP BY CodigoPlanta`
     );
     const recs_exp = await all_p(stmt_exp);
+    // await recs_exp.forEach((rec) => {
+    //   rec.CIF = bcrypt.hash(rec.CIF, 10);
+    // });
 
     // Save the contracts to the database using the updated saveContracts function
     const data = await demandController.saveContracts(recs_exp, userEmail);

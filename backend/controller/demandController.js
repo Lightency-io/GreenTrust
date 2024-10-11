@@ -2,7 +2,9 @@
 const utils = require('../middleware/utils.js');
 const { getGreenTrustModel, getEMSDataModel } = require('../db.js');
 const sqlite3 = require('sqlite3').verbose();
-const {checkUserAuthorization} = require('../middleware/authUtils.js')
+const { checkUserAuthorization } = require('../middleware/authUtils.js')
+const bcrypt = require('bcrypt');
+const CryptoJS = require('crypto-js');
 
 
 
@@ -31,7 +33,11 @@ const saveContracts = async (contractsArray, userEmail) => {
       const existingContract = await Data.findOne({ id: contract.id });
 
       if (!existingContract) {
-        const savedContract = await Data.create(contract);
+        //contract.CIF = bcrypt.hash(contract.CIF, 10);
+        var encryptedContract = await encryptData(contract);
+        console.log("encryptedContract")
+        console.log(encryptedContract)
+        const savedContract = await Data.create(encryptedContract);
         savedContracts.push(savedContract);
       } else {
         console.log(`Demand with ID ${contract.id} already exists. Skipping...`);
@@ -46,6 +52,36 @@ const saveContracts = async (contractsArray, userEmail) => {
 };
 
 
+
+function encryptData(dataObj) {
+  const encryptionKey =  "my-secret-key"
+  const CIFEncrypted = CryptoJS.AES.encrypt(dataObj.CIF, encryptionKey).toString();
+  const PotenciaEncrypted = CryptoJS.AES.encrypt(dataObj.Potencia.toString(), encryptionKey).toString();
+  return {
+    ...dataObj,
+    CIF: CIFEncrypted,
+    Potencia: PotenciaEncrypted
+  };
+};
+
+function encryptPotencia(dataObj) {
+  const encryptionKey =  "my-secret-key"
+  const PotenciaEncrypted = CryptoJS.AES.encrypt(dataObj.Potencia.toString(), encryptionKey).toString();
+  return {
+    ...dataObj,
+    Potencia: PotenciaEncrypted
+  };
+};
+
+function decryptData(dataObj) {
+  const CIFDecrypt = CryptoJS.AES.decrypt(dataObj.CIF, 'my-secret-key').toString(CryptoJS.enc.Utf8)
+  const PotenciaDecrypt = CryptoJS.AES.decrypt(dataObj.Potencia, 'my-secret-key').toString(CryptoJS.enc.Utf8)
+  return {
+    ...dataObj,
+    CIF: CIFDecrypt,
+    Potencia: PotenciaDecrypt
+  };
+};
 
 
 const updateCertificate = async (req, res) => {
@@ -83,28 +119,28 @@ const updateCertificate = async (req, res) => {
 
 
 async function getDataRow(req, res, next) {
-    const { keys, uuid } = req.body
-    if (!keys) res.status(401).end()
-            const file = files[uuid]
-            if (!file) {
-                next(new Error("File not found"))
-            }
-            const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
-            const recs_exp = (await utils.get_p(stmt_exp))
-            res.send(recs_exp)
-            //TODO create a demand obj consume it from front
+  const { keys, uuid } = req.body
+  if (!keys) res.status(401).end()
+  const file = files[uuid]
+  if (!file) {
+    next(new Error("File not found"))
+  }
+  const stmt_exp = db.prepare(`select *, SUM(GarantiaSolicitada) as sum from ${file.table_id} where id in (${keys.toString()}) group by CodigoPlanta`)
+  const recs_exp = (await utils.get_p(stmt_exp))
+  res.send(recs_exp)
 }
 
 async function getDemand(req, res, next) {
   const GreenTrustModel = getGreenTrustModel();
   console.log(GreenTrustModel)
   const Data = GreenTrustModel
-    try {
-        const demand = await Data.find();
-        res.status(200).json(demand);
-    } catch (error) {
-        console.error('Error getting demand:', error);
-}
+  try {
+    const demand = await Data.find();
+
+    res.status(200).json(demand);
+  } catch (error) {
+    console.error('Error getting demand:', error);
+  }
 }
 
 
@@ -152,7 +188,7 @@ const fetchCertificateswithStatus = async (req, res) => {
     const authorizedCertificates = certificates.filter(cert =>
       checkUserAuthorization(req.user, cert)
     );
-    
+
 
     res.status(200).json(authorizedCertificates);
   } catch (error) {
@@ -222,45 +258,45 @@ const fetchCertificatewithId = async (req, res) => {
 async function verifyCertificate(req, res) {
   const EMSDataModel = getEMSDataModel();
   try {
-      // Extract the certificate data from the request body
-      const certificateData = req.body;
+    // Extract the certificate data from the request body
+    const certificateData = req.body;
 
-      // Destructure the certificateData to exclude tokenOnChainId and sum fields
-      const {
-          _id,
-          status,
-          __v,
-          createdAt,
-          updatedAt,
-          tokenOnChainId, // excluded
-          sum, 
-          FechaInicio,
-          FechaFin,
-          demanderOrganization,
-          demanderEmail,
-          transferredToDemander,           // excluded
-          ...criteria     // spread the rest of the fields into `criteria`
-      } = certificateData;
+    // Destructure the certificateData to exclude tokenOnChainId and sum fields
+    const {
+      _id,
+      status,
+      __v,
+      createdAt,
+      updatedAt,
+      tokenOnChainId, // excluded
+      sum,
+      FechaInicio,
+      FechaFin,
+      demanderOrganization,
+      demanderEmail,
+      transferredToDemander,           // excluded
+      ...criteria     // spread the rest of the fields into `criteria`
+    } = certificateData;
 
-      // Search for a matching document in EMSDataModel
-      console.log(criteria)
-      const matchingCertificate = await EMSDataModel.findOne(criteria);
+    // Search for a matching document in EMSDataModel
+    console.log(criteria)
+    const matchingCertificate = await EMSDataModel.findOne(criteria);
 
 
-      // Check if a matching certificate was found
-      if (matchingCertificate) {
-          return res.status(200).json({
-              message: 'Certificate is valid.',
-              certificate: matchingCertificate
-          });
-      } else {
-          return res.status(404).json({
-              message: 'Certificate not found. Invalid certificate.'
-          });
-      }
+    // Check if a matching certificate was found
+    if (matchingCertificate) {
+      return res.status(200).json({
+        message: 'Certificate is valid.',
+        certificate: matchingCertificate
+      });
+    } else {
+      return res.status(404).json({
+        message: 'Certificate not found. Invalid certificate.'
+      });
+    }
   } catch (error) {
-      console.error('Error verifying certificate:', error);
-      return res.status(500).json({ error: 'An error occurred while verifying the certificate.' });
+    console.error('Error verifying certificate:', error);
+    return res.status(500).json({ error: 'An error occurred while verifying the certificate.' });
   }
 }
 
@@ -270,16 +306,15 @@ async function verifyCertificate(req, res) {
 // Function to fetch all certificates with status "in_progress"
 const fetchCertificatesInProgress = async () => {
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  console.log(GreenTrustModel)
+  const Data = GreenTrustModel
   try {
     // Find all documents where the status is "in_progress"
     const certificates = await Data.find({ status: 'in_progress' });
-
     if (!certificates.length) {
       console.log("no certificates found");
       return [];
-      
+
     }
     console.log(certificates)
     // Return the list of certificates
@@ -292,8 +327,8 @@ const Data = GreenTrustModel
 // Function to update the status of a certificate in the database
 const updateCertificateStatusInDB = async (razonSocial, id, status) => {
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  console.log(GreenTrustModel)
+  const Data = GreenTrustModel
   try {
     const updatedCertificate = await Data.findOneAndUpdate(
       { RazonSocial: razonSocial, id },  // Match by both RazonSocial and id
@@ -315,8 +350,8 @@ const Data = GreenTrustModel
 // Function to update the status of a certificate in the database
 const updateCertificateToTransferred = async (razonSocial, id) => {
   const GreenTrustModel = getGreenTrustModel();
-console.log(GreenTrustModel)
-const Data = GreenTrustModel
+  console.log(GreenTrustModel)
+  const Data = GreenTrustModel
   try {
     const updatedCertificate = await Data.findOneAndUpdate(
       { RazonSocial: razonSocial, id },  // Match by both RazonSocial and id
@@ -335,4 +370,4 @@ const Data = GreenTrustModel
 };
 
 
-module.exports = {getDataRow,saveContracts,getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred, updateCertificate};
+module.exports = { getDataRow, saveContracts, getDemand, updateTokenOnChainId, fetchCertificatesInProgress, updateCertificateStatusInDB, verifyCertificate, fetchCertificateswithStatus, fetchCertificatesCompanywithStatus, fetchCertificatewithId, updateCertificateToTransferred, updateCertificate };

@@ -61,7 +61,7 @@ const dataSchema = new Schema(
       required: true,
     },
     Potencia: {
-      type: Number,
+      type: String,
       required: true,
     },
     Tecnologia: {
