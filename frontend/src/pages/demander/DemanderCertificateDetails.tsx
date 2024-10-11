@@ -208,6 +208,7 @@ const updateCertificateOnChain = async (
 
 
         const data = await response.json();
+        console.log(data)
         setCertificate(data);
         setUpdatedCertificate(data);
       } catch (err: any) {

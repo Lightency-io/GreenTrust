@@ -14,6 +14,16 @@ import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress
 import { HexString } from "aptos";
 import {jwtDecode} from 'jwt-decode';
 
+import CryptoJS from 'crypto-js';
+
+const secretKey = 'my-secret-key';
+
+// Function to encrypt text
+function encryptAES(plainText: string, key: string): string {
+  const encrypted = CryptoJS.AES.encrypt(plainText, key).toString();
+  return encrypted;
+}
+
 dayjs.extend(isBetween)
 
 const { RangePicker } = DatePicker;
@@ -166,18 +176,6 @@ function UploadPage() {
     return dayjs(e.FechaInicio.toJSDate()).isBetween(range[0], range[1], "day", '[]')
   })
 
-  function download(filename: string, url: string) {
-    var element = document.createElement('a');
-    element.setAttribute('href', url);
-    element.setAttribute('download', filename);
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
-  }
 
   interface DecodedToken {
     user: {
@@ -200,11 +198,13 @@ function UploadPage() {
       return null;
     }
   };
+  
+  
+  
   const down = async () => {
     setLoading(true);
     
   const user = getCurrentUser();
-  console.log(user)
   
     try {
       // Post data to the database first

@@ -25,26 +25,19 @@ import Layout from './components/Layout'; // Import ProtectedRoute
 
 import { PetraWallet } from "petra-plugin-wallet-adapter";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
+import { PontemWalletAdapter, WalletProvider } from "@pontem/aptos-wallet-adapter";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import ProfilePage from './pages/profile';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import { AuthProvider } from './Auth/AuthProvider';
 
-const wallets = [new PetraWallet(), new MartianWallet];
+const wallets = [new PetraWallet(), new MartianWallet()];
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
     path: "/auth",
     element: <AuthPage />,
-  },
-  {
-    path: "/upload",
-    element: <UploadPage />,
-  },
-  {
-    path: "/files/:uuid",
-    element: <FilePage />,
   },
   {
     path: "/connect-cnms",
@@ -79,6 +72,8 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "", element: <DemanderDashboard /> },
+      { path: "upload", element: <UploadPage/>},
+      { path: "files/:uuid", element: <FilePage/>},
       { path: ":status", element: <Demander /> },
       { path: ":status/:razonSocial", element: <DemanderCompanyCertificates /> },
       { path: ":status/:razonSocial/certificate/:id", element: <DemanderCertificateDetails /> },

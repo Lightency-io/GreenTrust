@@ -20,6 +20,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import { useAuth } from '../Auth/AuthProvider';
+
 
 
 interface NavbarProps {
@@ -29,9 +31,14 @@ interface NavbarProps {
 
 const VerticalNavbar: React.FC<NavbarProps> = ({ role, demanderEmail }) => {
   const navigate = useNavigate();
+  const {logout} = useAuth();
+
 
   const handleLogout = () => {
     console.log('Logging out...');
+    logout();
+    navigate('/auth')
+
   };
   console.log("test", role)
   const navItems = role === 'demander' ? [

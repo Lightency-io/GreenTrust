@@ -5,7 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const { checkUserAuthorization } = require('../middleware/authUtils.js')
 const bcrypt = require('bcrypt');
 const CryptoJS = require('crypto-js');
-
+const axios = require('axios');
 
 
 
@@ -74,15 +74,11 @@ function encryptPotencia(dataObj) {
 };
 
 function decryptData(dataObj) {
-  const CIFDecrypt = CryptoJS.AES.decrypt(dataObj.CIF, 'my-secret-key').toString(CryptoJS.enc.Utf8)
-  const PotenciaDecrypt = CryptoJS.AES.decrypt(dataObj.Potencia, 'my-secret-key').toString(CryptoJS.enc.Utf8)
-  return {
-    ...dataObj,
-    CIF: CIFDecrypt,
-    Potencia: PotenciaDecrypt
-  };
-};
-
+  dataObj.CIF = CryptoJS.AES.decrypt(dataObj.CIF, 'my-secret-key').toString(CryptoJS.enc.Utf8);
+  dataObj.Potencia = CryptoJS.AES.decrypt(dataObj.Potencia, 'my-secret-key').toString(CryptoJS.enc.Utf8);
+  
+  return dataObj; // The same dataObj with updated properties
+}
 
 const updateCertificate = async (req, res) => {
   const { id } = req.params;
@@ -246,13 +242,15 @@ const fetchCertificatewithId = async (req, res) => {
     if (!isAuthorized) {
       return res.status(403).json({ message: 'You are not authorized to view this certificate' });
     }
-
-    res.status(200).json(certificate);
+    const decryptCert = decryptData(certificate)
+    res.status(200).json(decryptCert);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
+
+  // Axios for making HTTP requests
 
 // Function to verify if the certificate exists in the EMSDataModel
 async function verifyCertificate(req, res) {
@@ -260,6 +258,7 @@ async function verifyCertificate(req, res) {
   try {
     // Extract the certificate data from the request body
     const certificateData = req.body;
+    let certificateMatchExceptPotencia = false;
 
     // Destructure the certificateData to exclude tokenOnChainId and sum fields
     const {
@@ -274,21 +273,51 @@ async function verifyCertificate(req, res) {
       FechaFin,
       demanderOrganization,
       demanderEmail,
-      transferredToDemander,           // excluded
+      transferredToDemander,
+      CIF,
+      Potencia,           // excluded
       ...criteria     // spread the rest of the fields into `criteria`
     } = certificateData;
 
-    // Search for a matching document in EMSDataModel
-    console.log(criteria)
+    // Search for a matching document in EMSDataModel (excluding Potencia)
     const matchingCertificate = await EMSDataModel.findOne(criteria);
-
 
     // Check if a matching certificate was found
     if (matchingCertificate) {
-      return res.status(200).json({
-        message: 'Certificate is valid.',
-        certificate: matchingCertificate
+      certificateMatchExceptPotencia = true;
+
+      // Call the proof generation endpoint on the proof server
+      const generateProofResponse = await axios.post('http://localhost:3100/generate-proof', {
+        certificateData: certificateData  // Send the full certificate data to generate the proof
       });
+
+      // Check if the proof was generated successfully
+      const { proof, publicSignals } = generateProofResponse.data;
+      if (!proof || !publicSignals) {
+        return res.status(500).json({
+          message: 'Proof generation failed'
+        });
+      }
+
+      // Now call the proof verification endpoint
+      const verifyProofResponse = await axios.post('http://localhost:3100/verify-proof', {
+        proof,
+        publicSignals
+      });
+
+      const { verified, verificationKey, publicSignalsFinal, proofFinal  } = verifyProofResponse.data;
+      if (verified && certificateMatchExceptPotencia && publicSignalsFinal[0]=="1") {
+        return res.status(200).json({
+          message: 'Certificate and Potencia are valid',
+          verificationKey,  // Optionally return the verification key
+          publicSignalsFinal,
+          proofFinal
+        });
+      } else {
+        return res.status(400).json({
+          message: 'Invalid certificate or Potencia value'
+        });
+      }
     } else {
       return res.status(404).json({
         message: 'Certificate not found. Invalid certificate.'
@@ -299,6 +328,7 @@ async function verifyCertificate(req, res) {
     return res.status(500).json({ error: 'An error occurred while verifying the certificate.' });
   }
 }
+
 
 
 ///// ******* Admin Functions *******

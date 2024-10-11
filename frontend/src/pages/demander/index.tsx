@@ -68,7 +68,7 @@ const DemanderDashboard = () => {
                 borderColor: '#1b5e20',
               },
             }}
-            onClick={() => navigate('/upload')}
+            onClick={() => navigate('/demander/upload')}
           >
             Demand Certificates
           </Button>

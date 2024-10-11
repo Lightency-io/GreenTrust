@@ -75,7 +75,7 @@ function UploadPage() {
                     <Flex wrap gap="middle">
                         {data && data.map((file) => (
                             <FileCard onEdit={() => {
-                                navigate(`/files/${file.uuid}`)
+                                navigate(`/demander/files/${file.uuid}`)
                             }} key={file.uuid} file={file}/>
                         ))}
                         {isError && <div>{error.message}</div>}

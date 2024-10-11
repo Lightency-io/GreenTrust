@@ -12,6 +12,7 @@
 .vscode/
 .idea/
 
+*.ptau
 # ================================
 # Aptos Project in smartcontracts/
 # ================================

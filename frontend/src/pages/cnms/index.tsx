@@ -1,11 +1,11 @@
-import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount, LedgerVersionArg } from "@aptos-labs/ts-sdk";
 import React, { useEffect, useState } from 'react';
 import { HexString } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { getAddressFromAccountOrAddress } from "aptos";
+import { Button, CircularProgress } from '@mui/material'; 
 
-
-
+const SAFETY_FACTOR = 1.5
 
 interface Certificate {
   id: number;
@@ -65,6 +65,8 @@ console.log(walletAccount)
   const [success, setSuccess] = useState<string | null>(null);
   const [digitalAssetAddress, setDigitalAssetAddress] = useState('');
   const [recipient, setRecipient] = useState('');
+  const [response, setResponse] = useState(null);
+  const [ledgerVersion, setLedgerVersion] = useState<LedgerVersionArg>()
   //const [user, setUser] = useState<User>()
 
   // Fetch Certificates from API
@@ -437,6 +439,166 @@ console.log(walletAccount)
   };
   
 
+  // const handleTransferFee = async () => {
+  //   setLoading(true);
+
+  //   try {
+  //     const transaction = await aptos.transaction.build.simple({
+  //       sender: accountAdmin.accountAddress,
+  //       withFeePayer: true,
+  //       data: {
+  //         function: "0x1::aptos_account::transfer",
+  //         functionArguments: [
+  //           new AccountAddress(
+  //             new HexString("0xafcc1026cbcd1472c3dcfe5f12dffe8e33d2f118535b637e728e8a4850929ca6").toUint8Array()
+  //           ), 
+  //           1
+  //         ],
+  //       },
+  //     });
+
+  //     const senderAuth = aptos.transaction.sign({ signer: accountAdmin, transaction });
+  //     const feePayerAuthenticator = await signTransaction(transaction, true);
+
+  //     const txnResponse = await aptos.transaction.submit.simple({
+  //       transaction: transaction,
+  //       senderAuthenticator: senderAuth,
+  //       feePayerAuthenticator:feePayerAuthenticator,
+  //     });
+
+  //     const executedTransaction = await aptos.waitForTransaction({ transactionHash: txnResponse.hash });
+  //     console.log("executed transaction", executedTransaction.hash);
+  //   } catch (error) {
+  //     console.error("Transaction failed:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+  const handleTransferFee = async () => {
+    setLoading(true);
+
+    try {
+      const transaction = await aptos.transaction.build.simple({
+        sender: accountAdmin.accountAddress,
+        data: {
+          function: "0x1::aptos_account::transfer",
+          functionArguments: [
+            new AccountAddress(
+              new HexString("0xafcc1026cbcd1472c3dcfe5f12dffe8e33d2f118535b637e728e8a4850929ca6").toUint8Array()
+            ), 
+            100000000
+          ],
+        },
+      });
+
+
+      const [userTransactionResponse] = await aptos.transaction.simulate.simple({
+        signerPublicKey: accountAdmin.publicKey,
+        transaction,
+        options: {estimateGasUnitPrice:true, estimateMaxGasAmount:true}
+    });
+
+
+
+    let maxGasAmount = Number(userTransactionResponse.max_gas_amount);
+    let gasUsed = Number(userTransactionResponse.gas_used);
+    let gasUnitPrice = Number(userTransactionResponse.gas_unit_price);
+
+    let gasUsedWithSafety = gasUsed * SAFETY_FACTOR;
+
+    maxGasAmount = Math.min(maxGasAmount, gasUsedWithSafety);
+
+    let gasToPay = maxGasAmount * gasUnitPrice;
+    
+    console.log(walletAccount?.address)
+    const payTransaction = await signAndSubmitTransaction({
+      sender: walletAccount?.address,
+      data: {
+        function: "0x1::aptos_account::transfer",
+        functionArguments: [
+          import.meta.env.VITE_ACCOUNT_ADDRESS, 
+          gasToPay
+        ],
+      },
+    });
+
+
+    aptos.waitForTransaction({ transactionHash: payTransaction.hash }).then(async (res)=>{
+      console.log(res.success)
+
+      const senderAuth = aptos.transaction.sign({ signer: accountAdmin, transaction });
+
+      const txnResponse = await aptos.transaction.submit.simple({
+        transaction: transaction,
+        senderAuthenticator: senderAuth,
+      });
+
+      const executedTransaction = await aptos.waitForTransaction({ transactionHash: txnResponse.hash });
+      console.log("executed transaction", executedTransaction.hash, executedTransaction.success);
+    }) .catch(async(err)=>{
+      if (walletAccount?.address){
+        const rollbackTransaction = await aptos.transaction.build.simple({
+          sender: accountAdmin.accountAddress,
+          data: {
+            function: "0x1::aptos_account::transfer",
+            functionArguments: [
+              new AccountAddress(
+                new HexString(walletAccount?.address).toUint8Array()
+              ), 
+              gasToPay
+            ],
+          },
+        });
+
+        const senderAuthRoll = aptos.transaction.sign({ signer: accountAdmin, transaction: rollbackTransaction });
+
+        const txnResponseRoll = await aptos.transaction.submit.simple({
+          transaction: rollbackTransaction,
+          senderAuthenticator: senderAuthRoll,
+        });
+
+
+        const executedTransactionRoll = await aptos.waitForTransaction({ transactionHash: txnResponseRoll.hash });
+        console.log("executed transaction", executedTransactionRoll.hash, executedTransactionRoll.success)
+      }
+    })
+  
+
+    } catch (error) {
+      console.error("Transaction failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleBalance = async () => {
+    setLoading(true);
+
+    try {
+
+      const COIN_STORE = "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>";
+      type Coin = { coin: { value: string } };
+      const resource: any = await aptos.getAccountResource<Coin>({
+        accountAddress: "0xafcc1026cbcd1472c3dcfe5f12dffe8e33d2f118535b637e728e8a4850929ca6",
+        resourceType: COIN_STORE,
+        options: ledgerVersion,
+      });
+      const amount = Number(resource.coin.value);
+
+      aptos.getGasPriceEstimation()
+      console.log(amount)
+    } catch (error) {
+      console.error("Transaction failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   // Handle form submission
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -554,7 +716,20 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
       <h1>Create Collections and Mint Tokens from Certificates</h1>
       <button onClick={createCollectionsAndMintTokens}>Start Process</button>
       {transactionHash && <p>Last Transaction Hash: {transactionHash}</p>}
-
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleTransferFee}
+        disabled={loading}
+      >
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleBalance}
+        disabled={loading}
+      >balance
+      </Button>
       <h1>Update Token Status</h1>
       <form onSubmit={handleFormSubmit}>
         <div>
