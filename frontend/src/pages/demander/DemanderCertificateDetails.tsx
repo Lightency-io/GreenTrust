@@ -27,6 +27,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CryptoJS from "crypto-js";
 
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
@@ -255,7 +256,9 @@ const updateCertificateOnChain = async (
           ...updatedCertificate,
           FechaInicio: new Date(updatedCertificate.FechaInicio).toISOString(),
           FechaFin: new Date(updatedCertificate.FechaFin).toISOString(),
-          status: "in_progress"
+          status: "in_progress",
+          Potencia: CryptoJS.AES.encrypt(updatedCertificate.Potencia, import.meta.env.VITE_ENCRYPTION_KEY!).toString(),
+          CIF: CryptoJS.AES.encrypt(updatedCertificate.CIF, import.meta.env.VITE_ENCRYPTION_KEY!).toString(),
         };
 
         await updateCertificateOnChain(certificate, formattedCertificate);
