@@ -145,7 +145,7 @@ const AuthPage = () => {
       if (data.role === 'auditor') {
         navigate('/auditor');
       } else if (data.role === 'issuer') {
-        navigate('/Dashboard');
+        navigate('/issuer');
       } else if (data.role === 'demander') {
         navigate('/demander');
       } else {

@@ -25,7 +25,7 @@ import { useAuth } from '../Auth/AuthProvider';
 
 
 interface NavbarProps {
-  role: 'demander' | 'auditor';
+  role: 'demander' | 'auditor' | 'issuer';
   demanderEmail?: string;
 }
 

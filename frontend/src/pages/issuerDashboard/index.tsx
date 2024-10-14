@@ -1,112 +1,107 @@
-import { useState } from 'react';
-import './style.css';
-import { FaIdCard, FaBuilding, FaCalendarAlt, FaBolt, FaCog, FaRegFileAlt } from 'react-icons/fa';
-import jsonData from '../../json/test.json';
+import React from 'react';
+import { Card, CardContent, Typography, Container, Box, Button, Grid2 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import { jwtDecode } from 'jwt-decode';
 
-interface Certificate {
-    id: number;
-    CIF: string;
-    RazonSocial: string;
-    FechaInicio: string;
-    FechaFin: string;
-    Tecnologia: string;
-    Potencia: string;
-    status: string;
+interface DecodedToken {
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    walletAddress: string;
+  };
+  iat?: number; // Optional: for expiration timestamp
 }
-let Certificate: Certificate[] | (() => Certificate[]);
-try {
-    const response = await fetch('http://localhost:3000/demand/getDemand'); // API call
 
-    if (!response.ok) {
-      throw new Error(`Error fetching data: ${response.statusText}`);
+const IssuerDashboard = () => {
+  const navigate = useNavigate();
+
+  const getCurrentUser = () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+
+    try {
+      const decodedToken: DecodedToken = jwtDecode(token);
+      return decodedToken; // This will contain user info (e.g., userId, email, etc.)
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
     }
-    
-    const result = await response.json();  // Parse JSON response
-    console.log(result);  
-    Certificate = result;  // Set data state      
-  } catch (err: any) {
-    console.log(err)  // Catch and set error state
-  }
+  };
 
-function issuerDashboard() {
-    const [data] = useState<Certificate[]>(Certificate);
-    const [selectedObject, setSelectedObject] = useState<Certificate | null>(null);
-    const [activeTab, setActiveTab] = useState<string>('issued');
+  const issuerEmail = getCurrentUser()?.user.email;
+  return (
+    <Container maxWidth="lg">
+      <Box sx={{ textAlign: 'center', mt: 6, mb: 6 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 600,
+            color: '#424242',
+            mb: 2,
+          }}
+        >
+          Issuer Dashboard
+        </Typography>
+      </Box>
 
-    const handleRowClick = (item: Certificate) => {
-        setSelectedObject(item);
-    };
+      <Grid2 container spacing={4}>
+        <Grid2 size={{ xs: 12, md: 6 }}>
+          <Card
+            variant="outlined"
+            onClick={() => navigate(`/issuer/in_progress`)}
+            sx={{
+              cursor: 'pointer',
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
+              },
+              borderRadius: '12px',
+            }}
+          >
+            <CardContent>
+              <Box display="flex" justifyContent="center" mb={2}>
+                <HourglassEmptyIcon sx={{ fontSize: 50, color: '#ffa726' }} />
+              </Box>
+              <Typography variant="h6" component="div" textAlign="center" sx={{ fontWeight: 'medium' }}>
+                View In Progress Certificates
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid2>
 
-    const renderTabContent = (status: string) => {
-        return (
-            <div className="tab-content">
-                {data.filter(item => item.status === status).map((item, index) => (
-                    <div key={index} className="tab-item" onClick={() => handleRowClick(item)}>
-                        {item.RazonSocial}
-                    </div>
-                ))}
-            </div>
-        );
-    };
+        <Grid2 size={{ xs: 12, md: 6 }}>
+          <Card
+            variant="outlined"
+            onClick={() => navigate(`/issuer/issued`)}
+            sx={{
+              cursor: 'pointer',
+              height: '100%',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
+              },
+              borderRadius: '12px',
+            }}
+          >
+            <CardContent>
+              <Box display="flex" justifyContent="center" mb={2}>
+                <VerifiedIcon sx={{ fontSize: 50, color: '#2e7d32' }} />
+              </Box>
+              <Typography variant="h6" component="div" textAlign="center" sx={{ fontWeight: 'medium' }}>
+                View Issued Certificates
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid2>
+      </Grid2>
+    </Container>
+  );
+};
 
-    return (
-        <div className="container">
-            <div className="tabs">
-                <button className={activeTab === 'issued' ? 'active' : ''} onClick={() => setActiveTab('issued')}>Issued</button>
-                <button className={activeTab === 'in_progress' ? 'active' : ''} onClick={() => setActiveTab('in_progress')}>In Progress</button>
-                <button className={activeTab === 'rejected' ? 'active' : ''} onClick={() => setActiveTab('rejected')}>Rejected</button>
-                <button className={activeTab === 'audited' ? 'active' : ''} onClick={() => setActiveTab('audited')}>Audited</button>
-                <button className={activeTab === 'withdrawn' ? 'active' : ''} onClick={() => setActiveTab('withdrawn')}>Withdrawn</button>
-            </div>
-            {renderTabContent(activeTab)}
-            <div>
-                {selectedObject && (
-                    <div className="details">
-                        <h2>Certificate Details</h2>
-                        <div className="detail-row">
-                            <FaIdCard className="detail-icon" />
-                            <span className="detail-label">ID:</span>
-                            <span className="detail-value">{selectedObject.id}</span>
-                        </div>
-                        <div className="detail-row">
-                            <FaBuilding className="detail-icon" />
-                            <span className="detail-label">CIF:</span>
-                            <span className="detail-value">{selectedObject.CIF}</span>
-                        </div>
-                        <div className="detail-row">
-                            <FaRegFileAlt className="detail-icon" />
-                            <span className="detail-label">Razon Social:</span>
-                            <span className="detail-value">{selectedObject.RazonSocial}</span>
-                        </div>
-                        <div className="detail-row">
-                            <FaCalendarAlt className="detail-icon" />
-                            <span className="detail-label">Fecha Inicio:</span>
-                            <span className="detail-value">
-                                {new Date(parseInt(selectedObject.FechaInicio)).toLocaleDateString()}
-                            </span>
-                        </div>
-                        <div className="detail-row">
-                            <FaCalendarAlt className="detail-icon" />
-                            <span className="detail-label">Fecha Fin:</span>
-                            <span className="detail-value">
-                                {new Date(parseInt(selectedObject.FechaFin)).toLocaleDateString()}
-                            </span>
-                        </div>
-                        <div className="detail-row">
-                            <FaCog className="detail-icon" />
-                            <span className="detail-label">Tecnologia:</span>
-                            <span className="detail-value">{selectedObject.Tecnologia}</span>
-                        </div>
-                        <div className="detail-row">
-                            <FaBolt className="detail-icon" />
-                            <span className="detail-label">Potencia:</span>
-                            <span className="detail-value">{selectedObject.Potencia}</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-export default issuerDashboard;
+export default IssuerDashboard;

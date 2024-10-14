@@ -31,7 +31,7 @@ import CryptoJS from "crypto-js";
 
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
-import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum, MoveVector } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, InputGenerateTransactionPayloadData, TransactionWorkerEventsEnum, MoveVector, MoveOption } from "@aptos-labs/ts-sdk";
 import { HexString } from "aptos";
 
 const config = new AptosConfig({ network: Network.DEVNET });
@@ -100,7 +100,6 @@ const DemanderCertificateDetails = () => {
 
   const token = localStorage.getItem('authToken')
 
-
   // Function to update modified fields of the certificate on-chain
 const updateCertificateOnChain = async (
     originalCertificate: Certificate,
@@ -143,6 +142,8 @@ const updateCertificateOnChain = async (
         }
       }
   
+
+      
       if (payloads.length > 0) {
         await aptos.transaction.batch.forSingleAccount({
           sender: accountAdmin,

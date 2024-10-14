@@ -185,6 +185,10 @@ const fetchCertificateswithStatus = async (req, res) => {
       checkUserAuthorization(req.user, cert)
     );
 
+    if (authorizedCertificates.length === 0) {
+      return res.status(403).json({ message: 'You are not authorized to view these certificates' });
+    }
+
 
     res.status(200).json(authorizedCertificates);
   } catch (error) {
@@ -242,8 +246,14 @@ const fetchCertificatewithId = async (req, res) => {
     if (!isAuthorized) {
       return res.status(403).json({ message: 'You are not authorized to view this certificate' });
     }
+    if(req.user.role === 'demander' | 'auditor'){
+      console.log(req.user.role)
     const decryptCert = decryptData(certificate)
     res.status(200).json(decryptCert);
+    }
+    else(
+      res.status(200).json(certificate)
+    )
   } catch (error) {
     res.status(500).json({ message: error.message || 'Server error' });
   }

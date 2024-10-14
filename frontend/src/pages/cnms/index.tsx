@@ -1,4 +1,4 @@
-import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount, LedgerVersionArg } from "@aptos-labs/ts-sdk";
+import { Account, Aptos, AptosConfig, Network, Ed25519PrivateKey, AccountAddress, Bool, U64, MoveVector, MoveString, U8, Hex, AccountAuthenticator, KeylessAccount, LedgerVersionArg, MoveOption, AccountAddressInput } from "@aptos-labs/ts-sdk";
 import React, { useEffect, useState } from 'react';
 import { HexString } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
@@ -18,7 +18,6 @@ interface Certificate {
   status: string;
   demanderEmail: string;
 }
-
 interface User {
   id: string;
   email: string;
@@ -32,6 +31,10 @@ const aptos = new Aptos(config);
 const privateKey = new Ed25519PrivateKey(import.meta.env.VITE_PRIVATE_KEY!);
 const address = AccountAddress.from(import.meta.env.VITE_ACCOUNT_ADDRESS!);
 const accountAdmin = Account.fromPrivateKey({ privateKey, address });
+
+const privateKey2 = new Ed25519PrivateKey("0x854ebaf707015333ee729aa53b0ecfd48eb2f66c744df0607ab7fedea269091b");
+const address2 = AccountAddress.from("0xb2344bad2ba8f6d5c0726e3ffebe74a481f7eafdb84b3eea22804295906ac992");
+const accountAdmin2 = Account.fromPrivateKey({ privateKey: privateKey2, address: address2 });
 
 function stringToHex(str: string): string {
     return str
@@ -617,44 +620,6 @@ console.log(walletAccount)
 const transferDigitalAsset = async (digitalAssetAddress: string, recipient: string) => {
   const recipientAccount = new AccountAddress(new HexString(recipient).toUint8Array())
 
-  // try {
-  //   // Step 1: Create transfer transaction
-  //   // const transferTransaction = await aptos.transferDigitalAssetTransaction({
-  //   //   sender: senderAccount,
-  //   //   digitalAssetAddress: digitalAssetAddress,
-  //   //   recipient: recipientAccount,
-  //   // });
-  //   const transferTransaction = await aptos.transaction.build.simple({
-  //     sender: accountAdmin.accountAddress,
-  //     data: {
-  //       function: "0x1::object::transfer",
-  //       typeArguments:["0x6e91c7b2de00d2bd7224d113dfd67e3fe7f84a8cc0bdef547e15dc338a871621::guarantee_of_origin::GOToken"],
-  //       functionArguments: [
-  //           digitalAssetAddress,
-  //           recipient
-  //       ],
-  //     },
-  //   });
-
-
-  //   // Step 2: Sign and submit the transaction
-  //   const committedTxn = await aptos.signAndSubmitTransaction({
-  //     signer: accountAdmin,
-  //     transaction: transferTransaction,
-  //   });
-
-  //   // Step 3: Wait for the transaction to be confirmed
-  //   const pendingTxn = await aptos.waitForTransaction({
-  //     transactionHash: committedTxn.hash,
-  //   });
-
-  //   console.log('Transaction completed:', pendingTxn);
-  //   return pendingTxn;
-  // } catch (error) {
-  //   console.error('Error during asset transfer:', error);
-  //   throw new Error('Failed to transfer digital asset.');
-  // }
-
 
   const response = await signAndSubmitTransaction({
     sender: walletAccount?.address,
@@ -674,6 +639,64 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
     console.error(error);
   }
 };
+
+
+// // Function to handle the digital asset transfer
+// const mintConnectify = async () => {
+//   const statusHex = new HexString(stringToHex("hiiii"));
+//   console.log("hi",walletAccount?.address)
+//   const transaction = await aptos.transaction.build.simple({
+//     sender: accountAdmin2.accountAddress,
+//     data: {
+//         function: "0x6d4e728b5c3b532920dae71dca6c00ec7d6e0be6d4aab9e59d89f0cf8078d9d2::ConnectifyContract::mint_as_manufacturer",
+//         functionArguments: [
+//             "Amazon",
+//             "CEO Entrepreneur born in 1964 Jeffrey Bezos",
+//             "Amazon Kindle 0x1",
+//             "www.connectify.io",
+//             true,
+//             "@0x5d7c369f8891eff9c6134fad500acb9e2b65888df6f1a5f58b5bd247ccd5fd93",
+//             MoveVector.MoveString(["alou"]), // Properties
+//             MoveVector.MoveString(["vector<u8>"]), // Property types
+//             new MoveVector<MoveVector<U8>>([MoveVector.U8(statusHex.hex())]),
+            
+//         ],
+//     },
+//   });
+
+//   const senderAuthenticator = aptos.transaction.sign({
+//     signer: accountAdmin2,
+//     transaction,
+//   });
+
+//   const pendingTxn = await aptos.transaction.submit.simple({
+//     transaction,
+//     senderAuthenticator,
+//   });
+//   // if you want to wait for transaction
+//   try {
+//     await aptos.waitForTransaction({ transactionHash: pendingTxn.hash });
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
+// const handleMintConnectify = async (e) => {
+//   e.preventDefault();
+//   setLoading(true);
+//   setError(null);
+//   setSuccess(null);
+
+//   try {
+//     // Call the transfer function with the input values
+//     const transactionResult = await mintConnectify();
+//     setSuccess('Digital asset transferred successfully.');
+//   } catch (err) {
+//     setError('Error: ' + err.message);
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 
   const handleTransferSubmit = async (e) => {
     e.preventDefault();
@@ -730,6 +753,14 @@ const transferDigitalAsset = async (digitalAssetAddress: string, recipient: stri
         disabled={loading}
       >balance
       </Button>
+
+      {/* <Button
+        variant="contained"
+        color="primary"
+        onClick={handleMintConnectify}
+        disabled={loading}
+      >Mint
+      </Button> */}
       <h1>Update Token Status</h1>
       <form onSubmit={handleFormSubmit}>
         <div>

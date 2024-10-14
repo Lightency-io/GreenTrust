@@ -30,6 +30,9 @@ import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import ProfilePage from './pages/profile';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import { AuthProvider } from './Auth/AuthProvider';
+import Issuer from './pages/issuerDashboard/Issuer';
+import IssuerCompanyCertificates from './pages/issuerDashboard/IssuerCompanyCertificates';
+import IssuerCertificateDetails from './pages/issuerDashboard/IssuerCertificateDetails';
 
 const wallets = [new PetraWallet(), new MartianWallet()];
 const queryClient = new QueryClient();
@@ -79,15 +82,31 @@ const router = createBrowserRouter([
       { path: ":status/:razonSocial/certificate/:id", element: <DemanderCertificateDetails /> },
     ],
   },
-  // Protect issuer dashboard
-  {
-    path: "/Dashboard",
-    element: (
-      <ProtectedRoute allowedRoles={['issuer']}>
-        <IssuerDashboard />
-      </ProtectedRoute>
-    ),
-  },
+    // Issuer routes with persistent navbar
+    {
+      path: "/issuer",
+      element: (
+        <ProtectedRoute allowedRoles={['issuer']}>
+          <Layout role="issuer" />
+        </ProtectedRoute>
+      ),
+      children: [
+        { path: "", element: <IssuerDashboard /> },  // Issuer dashboard
+        { path: ":status", element: <Issuer /> },  // Issuer view based on status
+        { path: ":status/:razonSocial", element: <IssuerCompanyCertificates /> },
+        { path: ":status/:razonSocial/certificate/:id", element: <IssuerCertificateDetails /> },  // Issuer view for company certificates
+        // Add more issuer-related routes as needed
+      ],
+    },
+  // // Protect issuer dashboard
+  // {
+  //   path: "/Dashboard",
+  //   element: (
+  //     <ProtectedRoute allowedRoles={['issuer']}>
+  //       <IssuerDashboard />
+  //     </ProtectedRoute>
+  //   ),
+  // },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

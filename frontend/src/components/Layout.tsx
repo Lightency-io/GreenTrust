@@ -3,7 +3,7 @@ import { Outlet, useParams } from 'react-router-dom';
 import VerticalNavbar from './navbar';
 import { Box } from '@mui/material'; // or from your styling system
 
-const Layout: React.FC<{ role: 'demander' | 'auditor' }> = ({ role }) => {
+const Layout: React.FC<{ role: 'demander' | 'auditor' | 'issuer'}> = ({ role }) => {
   return (
     <Box sx={{ display: 'flex' }}>
       {/* Persistent Vertical Navbar */}
