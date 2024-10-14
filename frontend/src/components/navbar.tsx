@@ -47,12 +47,15 @@ const VerticalNavbar: React.FC<NavbarProps> = ({ role, demanderEmail }) => {
     { text: 'Issued Certificates', icon: <CheckCircleIcon />, path: `/demander/issued` },
     { text: 'Audited Certificates', icon: <AssignmentTurnedInIcon />, path: `/demander/audited` },
     { text: 'Rejected Certificates', icon: <BlockIcon />, path: `/demander/rejected` },
-  ] : [
+  ] : role === 'auditor' ? [
     { text: 'Home', icon: <HomeIcon />, path: '/auditor' },
     { text: 'Issued Certificates', icon: <CheckCircleIcon />, path: '/auditor/issued' },
     { text: 'Audited Certificates', icon: <AssignmentTurnedInIcon />, path: '/auditor/audited' },
     { text: 'Rejected Certificates', icon: <BlockIcon />, path: '/auditor/rejected' },
-  ];
+  ] : role === 'issuer' ? [
+    { text: 'In Progress Certificates', icon: <HourglassEmptyIcon />, path: '/issuer/in_progress' },
+    { text: 'Issued Certificates', icon: <CheckCircleIcon />, path: '/issuer/issued' },
+  ] : [];
 
   const bottomMenuItems = [
     { text: 'Profile', icon: <PersonIcon />, path: `/profile` },
