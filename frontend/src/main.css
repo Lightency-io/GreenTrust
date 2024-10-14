@@ -1,3 +1,10 @@
 body {
     margin: 20px;
+    padding: 0;
+    background-image: url('/wallpaperflare.com_wallpaper.jpg');
+    background-size: cover; /* This will cover the entire screen */
+    background-position: center; /* This will center the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
+    background-attachment: fixed; /* Keeps the image fixed when scrolling */
+    font-family: 'Arial', sans-serif; /* Optional: Set a global font */
 }
