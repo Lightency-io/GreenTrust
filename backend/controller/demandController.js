@@ -246,8 +246,7 @@ const fetchCertificatewithId = async (req, res) => {
     if (!isAuthorized) {
       return res.status(403).json({ message: 'You are not authorized to view this certificate' });
     }
-    if(req.user.role === 'demander' | 'auditor'){
-      console.log(req.user.role)
+    if(req.user.role === 'demander' || req.user.role==='auditor'){
     const decryptCert = decryptData(certificate)
     res.status(200).json(decryptCert);
     }
