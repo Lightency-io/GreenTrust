@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/npm-v7.20.0-red?logo=npm&style=for-the-badge" alt="npm" />
   <img src="https://img.shields.io/badge/Express.js-v4.17.1-black?logo=express&style=for-the-badge" alt="Express" />
   <img src="https://img.shields.io/badge/React-v17.0.2-blue?logo=react&style=for-the-badge" alt="React" />
+  <img src="https://img.shields.io/badge/ZK%20Proof-Security-blue?style=for-the-badge" alt="ZK Proof" />
   <img src="https://img.shields.io/badge/Aptos-Blockchain-green?style=for-the-badge" alt="Aptos" />
 </p>
 
@@ -29,14 +30,21 @@ Our primary objective is to transition from traditional, manual certification pr
 
 ## Key Features
 
-1. **On-Chain Certification Process**
-    - The entire certification lifecycle, including application, processing, and issuance, is managed on the Aptos blockchain.
-2. **Decentralized Data Verification**
-    - Data verification employs a decentralized model, enhancing security and reliability of the certification process.
-3. **Minting of On-Chain Certificates**
-    - Certifications that successfully pass the data compatibility check are minted as Non-Fungible Tokens (NFTs) on the blockchain, representing digital proof of renewable energy certification.
-4. **Automated Data Filtering and Export**
-    - Demand agents upload data, which is then automatically processed by our platform to filter, verify, and validate the information before issuing certificates.
+## Key Roles and Features
+
+1. **Demander Role**
+    - Demanders, such as energy producers or consumers, can upload their Energy Management System (EMS) data directly into the platform.
+   - Once the data is uploaded, demanders can initiate the process to request Guarantees of Origin (GDOs) for their renewable energy production or consumption.
+    - The entire demand and certification process is fully managed on-chain, providing transparency and accountability.
+2. **Issuer Role**
+    - The Issuer’s role involves overseeing the requests for GDOs through a dashboard that displays the status of all demands.
+    -The platform’s dashboard allows issuers to monitor and track the certification lifecycle, but the actual issuing of the certificates is fully automated.
+    - Once the data is validated, the certificates are minted as Non-Fungible Tokens (NFTs) on the Aptos blockchain, providing tamper-proof digital proof of renewable energy certification.
+    -  Zero-Knowledge Proof (ZK) technology is utilized to enable data verification without compromising sensitive or private information, enhancing both security and trust in the process.
+3. **Auditor Role**
+    - Auditors have the authority to review and verify the GDO requests. They can audit the EMS data submitted by demanders and validate or change the status of the request.
+    - The auditor role is critical for maintaining the integrity of the process, ensuring that only verified renewable energy is certified.
+
 
 ---
 
