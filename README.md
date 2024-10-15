@@ -1,6 +1,8 @@
-<p align="center">
-  <img src="https://lightency.io/img/logo-name-dark.png" alt="lightency" />
-</p>
+<div align="center">
+
+# GreenTrust
+
+**Revolutionizing Renewable Energy Certification with Blockchain and Zero-Knowledge Proofs**
 
 <p align="center">
   <img src="https://img.shields.io/badge/npm-v7.20.0-red?logo=npm&style=for-the-badge" alt="npm" />
@@ -9,16 +11,23 @@
   <img src="https://img.shields.io/badge/ZK%20Proof-Security-blue?style=for-the-badge" alt="ZK Proof" />
   <img src="https://img.shields.io/badge/Aptos-Blockchain-green?style=for-the-badge" alt="Aptos" />
 </p>
+</div>
+
+---
+
+<p align="center">
+  <img src="https://lightency.io/img/logo-name-dark.png" alt="lightency" />
+</p>
+
+Lightency is a team of experts in deep technologies committed to making renewable energy accessible and combating climate change. We aim to utilize new technologies to drive a green transition with significant economic and social impact.
 
 ---
 ## Key Partner
 <p align="center">
   <img src="https://www.nexusenergia.com/wp-content/uploads/2022/02/nexus-logo-n.svg" alt="nexus" />
 </p>
+Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading player in the energy sector, renowned for its commitment to renewable energy and sustainability. With over 20 years of experience, Nexus Energía supplies 100% certified renewable energy and manages the energy needs of both small and large businesses. They represent more than 16,700 renewable energy producers and manage over 14 TWh of energy annually.
 
-# GreenTrust
-
-**Revolutionizing Renewable Energy Certification with Blockchain and Zero-Knowledge Proofs**
 
 ---
 
@@ -32,7 +41,6 @@
 - [Usage](#usage)
 - [Challenges](#challenges)
 - [Future Work](#future-work)
-- [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 
@@ -52,7 +60,6 @@
 - **Manual Verification Option**: Issuers can manually verify and issue certificates without accessing private data.
 - **Audit Mechanism**: Auditors can approve or reject certificates, ensuring compliance.
 - **User Dashboards**: Customized interfaces for demanders, issuers, and auditors.
-- **Scalability**: Designed to handle increasing demand for renewable energy certificates.
 
 ---
 
@@ -86,6 +93,40 @@
 
 ---
 
+## Challenges
+
+### Sponsored Transactions:
+
+- **Issue**: Wallet limitations prevent the implementation of sponsored transactions.
+- **Attempted Solution**: We developed a custom method that uses transaction simulation to estimate gas fees and ask the user to sign a transfer transaction to send us the amount of the gas fees and return it if transaction fails. This method was effective for single transactions but challenging for batch transactions.
+- **Current Status**: Pending updates from wallet providers.
+
+---
+
+## Future Work
+
+- **Implement Sponsored Transactions**: Enable demanders to sponsor gas fees seamlessly.
+- **Improve User Interface**: Enhance user experience across all dashboards.
+- **Integrate a Marketplace**: Create a platform for trading Guarantees of Origin.
+
+### Business Expansion:
+
+#### Onboard Nexus Energía:
+
+- A leading energy company in Spain, supplying 100% certified renewable energy.
+- Manages over 16,700 renewable energy producers and 14 TWh of energy annually.
+
+#### Onboard STEG:
+
+- Tunisian Company of Electricity and Gas.
+- Aims to expand renewable energy certification in Tunisia.
+
+#### Global Outreach:
+
+- Explore opportunities with additional major energy players to promote renewable energy worldwide.
+
+---
+
 ## Installation
 
 ### Prerequisites
@@ -95,6 +136,7 @@
 - **Git**
 - **Python** (3.10 or later)
 - **snarkjs**
+- **MongoDB**
 
 ### Clone the Repository
 
@@ -113,15 +155,80 @@ yarn
 #or npm
 ```
 
-### Backend
+#### Backend
 ```bash
 cd backend
 yarn
 #or npm
 ```
 
-### ZKP
+#### ZKP
 ```bash
 cd ZKP
 yarn
 #or npm
+```
+
+#### Python
+```bash
+cd python_scripts
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Usage
+
+#### Start the Frontend Server
+```bash
+cd frontend
+yarn dev
+#or npm dev
+```
+
+#### Start the Backend Server
+```bash
+cd backend
+yarn start
+#or npm start
+```
+
+#### Start the ZKP Server
+```bash
+cd ZKP
+yarn start
+#or npm start
+```
+
+#### Python Script
+Run this script only once when testing to migrate dummy EMS data into the database, make sure to change the code in upgrade.py file with the corresponding dummy data file path. 
+```bash
+python upgrade.py
+```
+
+### Environment Variables
+
+#### Frontend
+Copy the `.env.example` file in the root directory of the frontend folder, rename it to `.env` and fill the environment variables as explained in the file.
+
+#### Backend
+Copy the `.env.example` file in the root directory of the backend folder, rename it to `.env` and fill the environment variables as explained in the file.
+
+#### ZKP
+Copy the `.env.example` file in the root directory of the frontend ZKP, rename it to `.env` and fill the environment variables as explained in the file.
+
+---
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+## Contact
+
+For any questions or inquiries, please contact us:
+
+- **Email**: [contact@lightency.com](mailto:contact@lightency.io)
+- **Website**: [Lightency](https://lightency.io)
+- **LinkedIn**: [Lightency on LinkedIn](https://www.linkedin.com/company/electrify-network/mycompany/)
+
