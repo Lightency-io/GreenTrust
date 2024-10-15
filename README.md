@@ -37,7 +37,6 @@ Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading play
 - [Introduction](#introduction)
 - [Features](#features)
 - [How It Works](#how-it-works)
-- [Architecture Overview](#architecture-overview)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Challenges](#challenges)
