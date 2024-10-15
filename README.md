@@ -36,6 +36,7 @@ Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading play
 
 - [Introduction](#introduction)
 - [Features](#features)
+- [Architecture Overview](#architecture-overview)
 - [How It Works](#how-it-works)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -60,6 +61,11 @@ Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading play
 - **Manual Verification Option**: Issuers can manually verify and issue certificates without accessing private data.
 - **Audit Mechanism**: Auditors can approve or reject certificates, ensuring compliance.
 - **User Dashboards**: Customized interfaces for demanders, issuers, and auditors.
+
+---
+## Architecture Overview
+
+![Architecture Diagram](https://github.com/user-attachments/assets/8a0f8ff6-f474-49cf-a4e3-0d007a152c24)
 
 ---
 
