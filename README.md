@@ -220,7 +220,7 @@ Copy the `.env.example` file in the root directory of the frontend ZKP, rename i
 ---
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](/License) file for details
 
 ---
 
