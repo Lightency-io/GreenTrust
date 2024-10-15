@@ -38,6 +38,7 @@ Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading play
 - [Features](#features)
 - [Architecture Overview](#architecture-overview)
 - [How It Works](#how-it-works)
+- [Demo Vide](#demo-video)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Challenges](#challenges)
@@ -96,6 +97,14 @@ Founded in 2000 and headquartered in Barcelona, Nexus Energía is a leading play
 - **Rejection Protocol**:
   - If rejected and unchanged for 30 days, the NFT is burned.
   - If updated, the NFT returns to `In Progress` for re-verification.
+
+---
+
+## Demo Video
+
+[![Demo Video](https://github.com/user-attachments/assets/1a826932-8a3a-4d38-8d54-d26185b33301)](https://www.youtube.com/watch?v=J-WewYt6bh0)
+
+
 
 ---
 
